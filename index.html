@@ -903,7 +903,6 @@ function buildOverviewCards() {
     card.style.setProperty('--accent', s.beltColor);
     card.querySelector?.('.student-card::before');
     card.innerHTML = `
-      <style>.student-card-${i}::before { background: ${s.beltColor}; }</style>
       <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${s.beltColor};border-radius:12px 12px 0 0"></div>
       <div class="card-header">
         <div class="avatar" style="background:${s.beltColor}22;border-color:${s.beltColor};color:${s.beltColor}">${s.emoji}</div>
@@ -1142,21 +1141,21 @@ try {
 
 
 function switchView(view, el) {
-  // Update all nav indicators (top + bottom)
-  document.querySelectorAll('.nav-tab, .bnav-item').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('[data-view="' + view + '"]').forEach(t => t.classList.add('active'));
+  document.querySelectorAll('.nav-tab, .bnav-item').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('[data-view="' + view + '"]').forEach(function(t) { t.classList.add('active'); });
   
-  // Hide everything
   document.getElementById('overviewGrid').style.display = 'none';
   document.getElementById('detailPanel').classList.remove('visible');
   document.getElementById('pagosSection').style.display = 'none';
   document.getElementById('studentSubMenu').classList.remove('visible');
 
   if (view === 'overview') {
-    document.getElementById('overviewGrid').style.display = '';
+    document.getElementById('overviewGrid').style.display = 'block';
+    buildOverviewCards();
   } else if (view === 'estudiantes') {
     document.getElementById('studentSubMenu').classList.add('visible');
-    document.getElementById('overviewGrid').style.display = '';
+    document.getElementById('overviewGrid').style.display = 'block';
+    buildOverviewCards();
   } else if (view === 'pagos') {
     document.getElementById('pagosSection').style.display = 'block';
     poblarFiltros();
@@ -1394,13 +1393,12 @@ function compartirRecibo() {
 
 // ===== INIT =====
 (function() {
-  buildOverviewCards();
-  
   // Ensure correct initial state
-  document.getElementById('overviewGrid').style.display = '';
+  document.getElementById('overviewGrid').style.display = 'block';
   document.getElementById('pagosSection').style.display = 'none';
   document.getElementById('detailPanel').classList.remove('visible');
   document.getElementById('studentSubMenu').classList.remove('visible');
+  buildOverviewCards();
 
   // Wire up bottom nav and top nav via addEventListener (works on GitHub Pages)
   document.querySelectorAll('[data-view]').forEach(function(item) {
