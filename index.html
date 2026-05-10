@@ -499,15 +499,15 @@
 
 <!-- BOTTOM NAV (mobile) -->
 <nav id="bottomNav">
-  <div class="bnav-item active" data-view="overview">
+  <div class="bnav-item active" data-view="overview" onclick="switchView('overview',this)">
     <span class="bnav-icon">🏠</span>
     <span class="bnav-label">Inicio</span>
   </div>
-  <div class="bnav-item" data-view="estudiantes">
+  <div class="bnav-item" data-view="estudiantes" onclick="switchView('estudiantes',this)">
     <span class="bnav-icon">🥋</span>
     <span class="bnav-label">Estudiantes</span>
   </div>
-  <div class="bnav-item" data-view="pagos">
+  <div class="bnav-item" data-view="pagos" onclick="switchView('pagos',this)">
     <span class="bnav-icon">💰</span>
     <span class="bnav-label">Pagos</span>
   </div>
