@@ -486,28 +486,28 @@
 
 <!-- TOP NAV (desktop) -->
 <div class="nav-tabs" id="navTabs">
-  <div class="nav-tab active" onclick="switchView('overview',this)" data-view="overview">
+  <div class="nav-tab active" data-view="overview">
     🏠 Inicio
   </div>
-  <div class="nav-tab" onclick="switchView('estudiantes',this)" data-view="estudiantes">
+  <div class="nav-tab" data-view="estudiantes">
     🥋 Estudiantes
   </div>
-  <div class="nav-tab" onclick="switchView('pagos',this)" data-view="pagos">
+  <div class="nav-tab" data-view="pagos">
     💰 Pagos & Recibos
   </div>
 </div>
 
 <!-- BOTTOM NAV (mobile) -->
 <nav id="bottomNav">
-  <div class="bnav-item active" onclick="switchView('overview',this)" data-view="overview">
+  <div class="bnav-item active" data-view="overview">
     <span class="bnav-icon">🏠</span>
     <span class="bnav-label">Inicio</span>
   </div>
-  <div class="bnav-item" onclick="switchView('estudiantes',this)" data-view="estudiantes">
+  <div class="bnav-item" data-view="estudiantes">
     <span class="bnav-icon">🥋</span>
     <span class="bnav-label">Estudiantes</span>
   </div>
-  <div class="bnav-item" onclick="switchView('pagos',this)" data-view="pagos">
+  <div class="bnav-item" data-view="pagos">
     <span class="bnav-icon">💰</span>
     <span class="bnav-label">Pagos</span>
   </div>
@@ -1392,7 +1392,37 @@ function compartirRecibo() {
   }
 }
 
-buildOverviewCards();
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', function() {
+  buildOverviewCards();
+  
+  // Ensure correct initial state
+  document.getElementById('overviewGrid').style.display = '';
+  document.getElementById('pagosSection').style.display = 'none';
+  document.getElementById('detailPanel').classList.remove('visible');
+  document.getElementById('studentSubMenu').classList.remove('visible');
+
+  // Wire up bottom nav and top nav via addEventListener (works on GitHub Pages)
+  document.querySelectorAll('[data-view]').forEach(function(item) {
+    item.addEventListener('click', function() {
+      var view = this.getAttribute('data-view');
+      switchView(view, this);
+    });
+  });
+
+  // Wire up student pills
+  document.querySelectorAll('.student-pill').forEach(function(pill, idx) {
+    pill.addEventListener('click', function() {
+      openDetail(idx);
+    });
+  });
+
+  // Load saved evaluations
+  try {
+    var saved = localStorage.getItem('tsd_evals');
+    if (saved) evaluations = JSON.parse(saved);
+  } catch(e) {}
+});
 </script>
 </body>
 </html>
