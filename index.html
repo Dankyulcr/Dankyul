@@ -1393,7 +1393,7 @@ function compartirRecibo() {
 }
 
 // ===== INIT =====
-document.addEventListener('DOMContentLoaded', function() {
+(function() {
   buildOverviewCards();
   
   // Ensure correct initial state
@@ -1422,7 +1422,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var saved = localStorage.getItem('tsd_evals');
     if (saved) evaluations = JSON.parse(saved);
   } catch(e) {}
-});
+})();
 </script>
 </body>
 </html>
