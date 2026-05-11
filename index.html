@@ -565,7 +565,7 @@ function renderDetail(i) {
   var sparkHtml = s.sparring.map(function(sp){ return '<div class="item"><span>⚔️</span><span>' + sp + '</span></div>'; }).join('');
   var breakHtml = s.breaking.map(function(b){ return '<div class="item"><span>🪵</span><span>' + b + '</span></div>'; }).join('');
   var knowHtml = s.knowledge.map(function(k){ return '<div class="item"><span>📚</span><span>' + k + '</span></div>'; }).join('');
-  var mentalHtml = s.mental.map(function(m){ return '<div class="item"><span>🧠</span><div><strong>' + m.t + '</strong><br><span style=\"color:#888;font-size:12px\">' + m.d + '</span></div></div>'; }).join('');
+  var mentalHtml = s.mental.map(function(m){ return '<div class="item"><span>🧠</span><div><strong>' + m.t + '</strong><br><span style="color:#888;font-size:12px">' + m.d + '</span></div></div>'; }).join('');
 
   var evalCats = [
     {key:'fis',title:'💪 FÍSICO',items:['Técnica','Potencia','Velocidad','Resistencia','Flexibilidad']},
