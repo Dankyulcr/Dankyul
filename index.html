@@ -310,7 +310,7 @@ select option{background:#0D1B2A}
 </nav>
 
 <!-- INICIO -->
-<div class="view on" id="view-inicio">
+<div class="view" id="view-inicio">
   <div id="cards-container"></div>
 </div>
 
@@ -1214,6 +1214,7 @@ function studentPinEnter() {
     document.getElementById('modeLockBtn').textContent = '🔓 Cerrar sesión';
     document.getElementById('btn-inicio').style.display = '';
     document.getElementById('btn-pagos').style.display = '';
+    document.getElementById('btn-asistencia').style.display = '';
     localStorage.setItem('dk_admin_session', Date.now());
     _origGoView('inicio');
     return;
@@ -1313,7 +1314,6 @@ buildPinPad('adminPinPad', pinKey, pinDel);
 buildPinPad('studentPinPad', studentPinKey, studentPinDel);
 
 checkAdminSession();
-renderCards();
 </script>
 
 <!-- MODAL EVENTO -->
