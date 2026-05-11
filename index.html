@@ -354,6 +354,27 @@ select option{background:#0D1B2A}
   <div id="pagos-list"></div>
 </div>
 
+
+<!-- CALENDARIO VIEW -->
+<div class="view" id="view-calendar">
+  <div id="admin-cal-add" style="display:none">
+    <button class="cal-add-btn" onclick="abrirModalEvento()">+ Agregar Evento / Actividad</button>
+  </div>
+  <div id="events-list"><p style="text-align:center;color:#888;padding:30px">No hay eventos registrados</p></div>
+</div>
+
+<!-- ASISTENCIA VIEW (admin only) -->
+<div class="view" id="view-asistencia">
+  <div style="margin-bottom:16px">
+    <div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1.5px;margin-bottom:14px">⏳ SOLICITUDES PENDIENTES</div>
+    <div id="asist-pending-list"><p style="color:#888;font-size:13px">No hay solicitudes pendientes</p></div>
+  </div>
+  <div>
+    <div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1.5px;margin-bottom:14px">✅ ASISTENCIAS CONFIRMADAS</div>
+    <div id="asist-confirmed-list"><p style="color:#888;font-size:13px">No hay asistencias registradas</p></div>
+  </div>
+</div>
+
 <!-- MODAL PAGO -->
 <div class="modal" id="modal-pago">
   <div class="modal-box">
@@ -1019,27 +1040,27 @@ var adminMode = false;
 
 function isAdmin() { return adminMode; }
 
+var adminPinEntry = '';
+
 function pinKey(k) {
-  var cur = document.getElementById('pinError').dataset.cur || '';
-  if (cur.length >= 4) return;
-  cur += k;
-  document.getElementById('pinError').dataset.cur = cur;
+  if (adminPinEntry.length >= 4) return;
+  adminPinEntry += k;
   for (var i = 0; i < 4; i++) {
-    document.getElementById('d' + i).classList.toggle('filled', i < cur.length);
+    document.getElementById('d' + i).classList.toggle('filled', i < adminPinEntry.length);
   }
+  if (adminPinEntry.length === 4) pinEnter();
 }
 
 function pinDel() {
-  var cur = document.getElementById('pinError').dataset.cur || '';
-  cur = cur.slice(0, -1);
-  document.getElementById('pinError').dataset.cur = cur;
+  adminPinEntry = adminPinEntry.slice(0, -1);
   for (var i = 0; i < 4; i++) {
-    document.getElementById('d' + i).classList.toggle('filled', i < cur.length);
+    document.getElementById('d' + i).classList.toggle('filled', i < adminPinEntry.length);
   }
 }
 
+
 function pinEnter() {
-  var cur = document.getElementById('pinError').dataset.cur || '';
+  var cur = adminPinEntry;
   if (cur === ADMIN_PIN) {
     adminMode = true;
     currentStudentId = null;
@@ -1057,7 +1078,7 @@ function pinEnter() {
     _origGoView('inicio');
   } else if (cur.length === 4) {
     document.getElementById('pinError').textContent = 'PIN incorrecto. Intentá de nuevo.';
-    document.getElementById('pinError').dataset.cur = '';
+    adminPinEntry = '';
     for (var i = 0; i < 4; i++) document.getElementById('d' + i).classList.remove('filled');
     setTimeout(function(){ document.getElementById('pinError').textContent = ''; }, 2000);
   }
