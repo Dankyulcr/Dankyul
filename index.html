@@ -901,17 +901,38 @@ function studentPinDel() {
 }
 
 function studentPinEnter() {
-  var idx = document.getElementById('loginName').value;
   var errEl = document.getElementById('loginError');
   errEl.textContent = '';
 
-  if (idx === '') {
-    errEl.textContent = 'Seleccioná tu nombre primero.';
-    studentPinEntry = ''; updateStudentDots(); return;
-  }
   if (studentPinEntry.length < 4) {
     errEl.textContent = 'Ingresá los 4 dígitos de tu PIN.';
     return;
+  }
+
+  // Check admin PIN first — no need to select a name
+  if (studentPinEntry === ADMIN_PIN) {
+    studentPinEntry = '';
+    updateStudentDots();
+    adminMode = true;
+    currentStudentId = null;
+    document.body.classList.add('admin-mode');
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('studentBar').classList.remove('visible');
+    document.getElementById('modeBar').style.display = 'flex';
+    document.getElementById('modeBadge').textContent = '⚡ MODO ADMINISTRADOR';
+    document.getElementById('modeBadge').className = 'mode-badge admin';
+    document.getElementById('modeLockBtn').textContent = '🔓 Cerrar sesión';
+    document.getElementById('btn-inicio').style.display = '';
+    document.getElementById('btn-pagos').style.display = '';
+    localStorage.setItem('dk_admin_session', Date.now());
+    _origGoView('inicio');
+    return;
+  }
+
+  var idx = document.getElementById('loginName').value;
+  if (idx === '') {
+    errEl.textContent = 'Seleccioná tu nombre primero.';
+    studentPinEntry = ''; updateStudentDots(); return;
   }
 
   var s = students[parseInt(idx)];
