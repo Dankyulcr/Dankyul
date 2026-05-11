@@ -1084,25 +1084,9 @@ function toggleAdminMode() {
 
 // Check if admin session still valid (8 hours)
 function checkAdminSession() {
-  var sess = localStorage.getItem('dk_admin_session');
-  if (sess && (Date.now() - parseInt(sess)) < 8 * 60 * 60 * 1000) {
-    adminMode = true;
-    currentStudentId = null;
-    document.body.classList.add('admin-mode');
-    document.getElementById('pinScreen').style.display = 'none';
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('modeBar').style.display = 'flex';
-    document.getElementById('modeBadge').textContent = '⚡ MODO ADMINISTRADOR';
-    document.getElementById('modeBadge').className = 'mode-badge admin';
-    document.getElementById('modeLockBtn').textContent = '🔓 Cerrar sesión';
-    document.getElementById('btn-inicio').style.display = '';
-    document.getElementById('btn-pagos').style.display = '';
-    _origGoView('inicio');
-  } else {
-    // No admin session → show student login instead of PIN
-    document.getElementById('pinScreen').style.display = 'none';
-    showStudentLogin();
-  }
+  // Always start with student login - security first
+  localStorage.removeItem('dk_admin_session');
+  showStudentLogin();
 }
 
 // ===== EXPORT EXCEL =====
