@@ -448,6 +448,8 @@ function goView(v) {
 function renderCards() {
   var html = '';
   students.forEach(function(s, i) {
+    // In student mode, only show their own card
+    if (currentStudentId !== null && !adminMode && i !== currentStudentId) return;
     var pct = Math.min(100, Math.round(s.months/s.monthsNeeded*100));
     var beltImg = getBelt(s.gup);
     html += '<div class="card" onclick="goDetail(' + i + ')">' +
@@ -474,7 +476,10 @@ function renderCards() {
 // ESTUDIANTES VIEW
 function renderEstudiantes() {
   var pillsHtml = '';
-  students.forEach(function(s, i) {
+  // If student mode: only show their own pill
+  var showList = (currentStudentId !== null && !adminMode) ? [currentStudentId] : students.map(function(_,i){return i;});
+  showList.forEach(function(i) {
+    var s = students[i];
     var bImg = getBelt(s.gup);
     pillsHtml += '<div class="pill' + (currentStudent===i?' on':'') + '" onclick="goDetail(' + i + ')">' +
       (bImg ? '<img src="' + bImg + '" style="width:32px;height:18px;object-fit:contain;vertical-align:middle;margin-right:4px">' : s.emoji + ' ') +
@@ -485,8 +490,9 @@ function renderEstudiantes() {
 }
 
 function goDetail(i) {
+  // Block student from viewing other profiles
+  if (currentStudentId !== null && !adminMode && i !== currentStudentId) return;
   currentStudent = i;
-  // Switch to estudiantes view
   document.querySelectorAll('.view').forEach(function(el){ el.classList.remove('on'); });
   document.querySelectorAll('.bnav-btn').forEach(function(el){ el.classList.remove('on'); });
   document.getElementById('view-estudiantes').classList.add('on');
@@ -747,14 +753,19 @@ function pinEnter() {
   var cur = document.getElementById('pinError').dataset.cur || '';
   if (cur === ADMIN_PIN) {
     adminMode = true;
+    currentStudentId = null;
     document.body.classList.add('admin-mode');
     document.getElementById('pinScreen').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('studentBar').classList.remove('visible');
     document.getElementById('modeBar').style.display = 'flex';
     document.getElementById('modeBadge').textContent = '⚡ MODO ADMINISTRADOR';
     document.getElementById('modeBadge').className = 'mode-badge admin';
     document.getElementById('modeLockBtn').textContent = '🔓 Cerrar sesión';
+    document.getElementById('btn-inicio').style.display = '';
+    document.getElementById('btn-pagos').style.display = '';
     localStorage.setItem('dk_admin_session', Date.now());
-    goView('inicio');
+    _origGoView('inicio');
   } else if (cur.length === 4) {
     document.getElementById('pinError').textContent = 'PIN incorrecto. Intentá de nuevo.';
     document.getElementById('pinError').dataset.cur = '';
@@ -773,12 +784,11 @@ function enterGuest() {
 function toggleAdminMode() {
   if (adminMode) {
     adminMode = false;
+    currentStudentId = null;
     document.body.classList.remove('admin-mode');
-    document.getElementById('modeBadge').textContent = '👤 MODO VISITANTE';
-    document.getElementById('modeBadge').className = 'mode-badge guest';
-    document.getElementById('modeLockBtn').textContent = '🔐 Admin';
     localStorage.removeItem('dk_admin_session');
-    goView('inicio');
+    document.getElementById('modeBar').style.display = 'none';
+    showStudentLogin();
   } else {
     // Show PIN screen again
     document.getElementById('pinError').dataset.cur = '';
@@ -793,13 +803,17 @@ function checkAdminSession() {
   var sess = localStorage.getItem('dk_admin_session');
   if (sess && (Date.now() - parseInt(sess)) < 8 * 60 * 60 * 1000) {
     adminMode = true;
+    currentStudentId = null;
     document.body.classList.add('admin-mode');
     document.getElementById('pinScreen').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('modeBar').style.display = 'flex';
     document.getElementById('modeBadge').textContent = '⚡ MODO ADMINISTRADOR';
     document.getElementById('modeBadge').className = 'mode-badge admin';
     document.getElementById('modeLockBtn').textContent = '🔓 Cerrar sesión';
-    goView('inicio');
+    document.getElementById('btn-inicio').style.display = '';
+    document.getElementById('btn-pagos').style.display = '';
+    _origGoView('inicio');
   } else {
     // No admin session → show student login instead of PIN
     document.getElementById('pinScreen').style.display = 'none';
