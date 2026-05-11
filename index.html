@@ -37,7 +37,7 @@ body{background:#0A1628;color:#E8E8E8;font-family:Arial,sans-serif;padding-botto
 .prog-fill{height:100%;border-radius:3px}
 .mini-stats{display:flex;gap:10px;margin-top:12px}
 .mini-stat{flex:1;text-align:center}
-.mini-val{font-size:22px;font-weight:700}
+.mini-val{font-size:22px;font-weight:700;color:#fff}
 .mini-lbl{font-size:10px;color:#888}
 
 /* DETAIL */
@@ -191,6 +191,43 @@ select option{background:#0D1B2A}
   .student-bar-belt{height:18px;object-fit:contain}
   .student-logout{background:transparent;border:1px solid #1E3050;color:#888;padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer}
 
+
+  /* ===== ASISTENCIA ===== */
+  .asist-btn{width:100%;background:linear-gradient(135deg,#1B3A6B,#C8102E);color:#fff;border:none;padding:16px;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;letter-spacing:1px;margin-bottom:16px}
+  .asist-pending{background:rgba(241,196,15,0.1);border:1px solid rgba(241,196,15,0.3);border-radius:10px;padding:12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .asist-item{background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.2);border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+  .asist-name{font-size:13px;font-weight:700;color:#fff}
+  .asist-date{font-size:11px;color:#888;margin-top:2px}
+  .asist-approve{background:#2ECC71;color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer}
+  .asist-reject{background:#E74C3C;color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-left:6px}
+  .asist-count{background:#C8102E;color:#fff;border-radius:12px;padding:2px 8px;font-size:11px;font-weight:700;margin-left:6px}
+
+  /* ===== CALENDARIO ===== */
+  .cal-event{background:#132035;border:1px solid #1E3050;border-radius:12px;margin-bottom:12px;overflow:hidden}
+  .cal-event-header{display:flex;align-items:center;gap:12px;padding:14px}
+  .cal-event-date{background:#C8102E;color:#fff;border-radius:8px;padding:8px 10px;text-align:center;min-width:48px;flex-shrink:0}
+  .cal-event-day{font-size:20px;font-weight:700;line-height:1}
+  .cal-event-mon{font-size:10px;letter-spacing:1px;text-transform:uppercase}
+  .cal-event-info{flex:1}
+  .cal-event-title{font-size:14px;font-weight:700;color:#fff}
+  .cal-event-desc{font-size:12px;color:#888;margin-top:3px;line-height:1.5}
+  .cal-event-img{width:100%;max-height:180px;object-fit:cover;display:block}
+  .cal-event-link{display:flex;align-items:center;gap:6px;padding:10px 14px;border-top:1px solid #1E3050;font-size:12px;color:#3498DB;text-decoration:none}
+  .cal-add-btn{background:#1B3A6B;color:#fff;border:none;padding:12px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;width:100%;margin-bottom:14px}
+
+  /* ===== PAGO STATUS ===== */
+  .pago-status-ok{background:rgba(46,204,113,0.12);border:1px solid rgba(46,204,113,0.3);border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .pago-status-warn{background:rgba(231,76,60,0.12);border:1px solid rgba(231,76,60,0.3);border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .pago-status-icon{font-size:28px;flex-shrink:0}
+  .pago-status-text{flex:1}
+  .pago-status-title{font-size:14px;font-weight:700}
+  .pago-status-sub{font-size:12px;margin-top:3px;opacity:0.8}
+
+  /* ===== TABS IN ADMIN ===== */
+  .admin-tabs{display:flex;gap:0;border-bottom:1px solid #1E3050;margin-bottom:16px;overflow-x:auto}
+  .admin-tab{padding:10px 16px;font-size:12px;font-weight:700;color:#888;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;letter-spacing:0.5px}
+  .admin-tab.on{color:#fff;border-bottom-color:#C8102E}
+
 </style>
 </head>
 <body>
@@ -294,6 +331,8 @@ select option{background:#0D1B2A}
   <button class="bnav-btn on" id="btn-inicio" onclick="goView('inicio')"><span>🏠</span>Inicio</button>
   <button class="bnav-btn" id="btn-estudiantes" onclick="goView('estudiantes')"><span>🥋</span>Estudiantes</button>
   <button class="bnav-btn admin-only" id="btn-pagos" onclick="goView('pagos')"><span>💰</span>Pagos</button>
+  <button class="bnav-btn" id="btn-calendar" onclick="goView('calendar')"><span>📅</span>Eventos</button>
+  <button class="bnav-btn admin-only" id="btn-asistencia" onclick="goView('asistencia')"><span>✅</span>Asistencia</button>
 </nav>
 
 <!-- INICIO -->
@@ -437,11 +476,15 @@ function toast(msg) {
 function goView(v) {
   document.querySelectorAll('.view').forEach(function(el){ el.classList.remove('on'); });
   document.querySelectorAll('.bnav-btn').forEach(function(el){ el.classList.remove('on'); });
-  document.getElementById('view-' + v).classList.add('on');
-  document.getElementById('btn-' + v).classList.add('on');
+  var viewEl = document.getElementById('view-' + v);
+  var btnEl = document.getElementById('btn-' + v);
+  if (viewEl) viewEl.classList.add('on');
+  if (btnEl) btnEl.classList.add('on');
   if(v === 'inicio') renderCards();
   if(v === 'estudiantes') renderEstudiantes();
   if(v === 'pagos') renderPagos();
+  if(v === 'calendar') renderEventos();
+  if(v === 'asistencia') renderAsistenciaAdmin();
 }
 
 // CARDS
@@ -464,9 +507,9 @@ function renderCards() {
       '<div class="prog-lbl"><span>Progreso de tiempo</span><span>' + pct + '%</span></div>' +
       '<div class="prog-bar"><div class="prog-fill" style="width:' + pct + '%;background:' + s.beltColor + '"></div></div>' +
       '<div class="mini-stats">' +
-        '<div class="mini-stat"><div class="mini-val" style="color:' + s.beltColor + '">' + s.months + '</div><div class="mini-lbl">MESES</div></div>' +
-        '<div class="mini-stat"><div class="mini-val">' + s.age + '</div><div class="mini-lbl">EDAD</div></div>' +
-        '<div class="mini-stat"><div class="mini-val">' + s.steps.length + '</div><div class="mini-lbl">PASOS</div></div>' +
+        '<div class="mini-stat"><div class="mini-val" style="color:#fff">' + s.months + '</div><div class="mini-lbl">MESES</div></div>' +
+        '<div class="mini-stat"><div class="mini-val" style="color:#fff">' + s.age + '</div><div class="mini-lbl">EDAD</div></div>' +
+        '<div class="mini-stat"><div class="mini-val" style="color:#fff">' + s.steps.length + '</div><div class="mini-lbl">PASOS</div></div>' +
       '</div>' +
     '</div>';
   });
@@ -499,6 +542,7 @@ function goDetail(i) {
   document.getElementById('btn-estudiantes').classList.add('on');
   renderEstudiantes();
   document.getElementById('detail-container').scrollIntoView({behavior:'smooth'});
+  if (currentStudentId !== null && !adminMode) renderStudentAsistencia();
 }
 
 function renderDetail(i) {
@@ -554,6 +598,8 @@ function renderDetail(i) {
       '<div><div class="det-name">' + s.name.toUpperCase() + '</div><div class="det-sub">' + s.age + ' años · ' + s.gup + ' · ' + s.beltName + '</div></div>' +
     '</div>' +
     '<div class="alert-box ' + alertClass + '">' + s.alert + '</div>' +
+    renderPaymentStatusBanner(s.fullName) +
+    '<div id="student-asist-section"></div>' +
 
     '<div style="background:rgba(200,16,46,0.08);border:1px solid rgba(200,16,46,0.25);border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">' +
       '<div style="font-size:28px;line-height:1">' + (getBelt(s.targetGup.indexOf('→') !== -1 ? s.targetGup.split('→')[1].trim() : s.targetGup) ? '<img src="' + getBelt(s.targetGup.indexOf('→') !== -1 ? s.targetGup.split('→')[1].trim() : s.targetGup) + '" style="width:54px;height:30px;object-fit:contain">' : '🎯') + '</div>' +
@@ -712,7 +758,29 @@ function verRecibo(idx) {
 function imprimirRecibo() {
   var c = document.getElementById('recibo-print').outerHTML;
   var w = window.open('','_blank');
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recibo Dan Kyul</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:20px}.recibo{max-width:480px;margin:0 auto;padding:24px;border:1px solid #ddd;border-radius:12px}.rec-header{display:flex;align-items:center;gap:12px;border-bottom:3px solid #1B3A6B;padding-bottom:14px;margin-bottom:16px}.rec-logo{width:60px;height:60px;border-radius:50%;border:2px solid #1B3A6B}.rec-school h3{font-size:16px;font-weight:700;color:#1B3A6B;letter-spacing:1px}.rec-school p{font-size:10px;color:#666;margin-top:2px}.rec-title{text-align:center;font-size:22px;font-weight:700;color:#C8102E;letter-spacing:2px;margin-bottom:14px}.rec-code{text-align:center;background:#1B3A6B;color:#fff;padding:8px;border-radius:8px;font-size:16px;font-weight:700;letter-spacing:3px;margin-bottom:16px}.rec-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #eee;font-size:13px}.rec-row strong{color:#1B3A6B}.rec-total{display:flex;justify-content:space-between;padding:10px 0;font-size:15px;font-weight:700;color:#1B3A6B;border-top:2px solid #1B3A6B;margin-top:6px}.rec-footer{text-align:center;margin-top:16px;font-size:10px;color:#999}.rec-firmas{display:flex;gap:20px;margin-top:24px}.firma{flex:1;text-align:center}.firma-line{border-top:1px solid #999;margin-bottom:4px}.firma-lbl{font-size:9px;color:#666}@media print{body{padding:0}}</style></head><body>' + c + '</body></html>');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recibo Dan Kyul</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:20px}.recibo{max-width:480px;margin:0 auto;padding:24px;border:1px solid #ddd;border-radius:12px}.rec-header{display:flex;align-items:center;gap:12px;border-bottom:3px solid #1B3A6B;padding-bottom:14px;margin-bottom:16px}.rec-logo{width:60px;height:60px;border-radius:50%;border:2px solid #1B3A6B}.rec-school h3{font-size:16px;font-weight:700;color:#1B3A6B;letter-spacing:1px}.rec-school p{font-size:10px;color:#666;margin-top:2px}.rec-title{text-align:center;font-size:22px;font-weight:700;color:#C8102E;letter-spacing:2px;margin-bottom:14px}.rec-code{text-align:center;background:#1B3A6B;color:#fff;padding:8px;border-radius:8px;font-size:16px;font-weight:700;letter-spacing:3px;margin-bottom:16px}.rec-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #eee;font-size:13px}.rec-row strong{color:#1B3A6B}.rec-total{display:flex;justify-content:space-between;padding:10px 0;font-size:15px;font-weight:700;color:#1B3A6B;border-top:2px solid #1B3A6B;margin-top:6px}.rec-footer{text-align:center;margin-top:16px;font-size:10px;color:#999}.rec-firmas{display:flex;gap:20px;margin-top:24px}.firma{flex:1;text-align:center}.firma-line{border-top:1px solid #999;margin-bottom:4px}.firma-lbl{font-size:9px;color:#666}@media print{body{padding:0}}</style></head><body>' + c + '
+<!-- MODAL EVENTO -->
+<div class="modal" id="modal-evento">
+  <div class="modal-box">
+    <div class="modal-title">Agregar Evento</div>
+    <label class="form-lbl">TÍTULO DEL EVENTO</label>
+    <input type="text" id="ev-titulo" placeholder="Ej: Torneo Regional, Clínica, Examen...">
+    <label class="form-lbl">FECHA</label>
+    <input type="date" id="ev-fecha">
+    <label class="form-lbl">DESCRIPCIÓN</label>
+    <input type="text" id="ev-desc" placeholder="Descripción breve del evento">
+    <label class="form-lbl">LINK (opcional)</label>
+    <input type="text" id="ev-link" placeholder="https://wtsda.com/...">
+    <label class="form-lbl">IMAGEN/AFICHE (URL opcional)</label>
+    <input type="text" id="ev-img" placeholder="https://... (link de imagen)">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="cerrarModal('modal-evento')">Cancelar</button>
+      <button class="save-btn" style="margin:0" onclick="guardarEvento()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+</body></html>');
   w.document.close();
   setTimeout(function(){ w.print(); }, 400);
 }
@@ -723,6 +791,227 @@ function compartirRecibo() {
   else{ navigator.clipboard.writeText(texto).then(function(){ toast('Recibo copiado — pegalo en WhatsApp o correo'); }); }
 }
 
+
+
+// ===== CALENDARIO DE EVENTOS =====
+var eventos = [];
+
+function loadEventos() {
+  try { eventos = JSON.parse(localStorage.getItem('dk_eventos') || '[]'); } catch(e){ eventos=[]; }
+}
+
+function saveEventos() { localStorage.setItem('dk_eventos', JSON.stringify(eventos)); }
+
+function abrirModalEvento() {
+  document.getElementById('ev-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('ev-titulo').value = '';
+  document.getElementById('ev-desc').value = '';
+  document.getElementById('ev-link').value = '';
+  document.getElementById('ev-img').value = '';
+  document.getElementById('modal-evento').classList.add('on');
+}
+
+function guardarEvento() {
+  var titulo = document.getElementById('ev-titulo').value.trim();
+  var fecha  = document.getElementById('ev-fecha').value;
+  var desc   = document.getElementById('ev-desc').value.trim();
+  var link   = document.getElementById('ev-link').value.trim();
+  var img    = document.getElementById('ev-img').value.trim();
+  if (!titulo || !fecha) { alert('Completá el título y la fecha.'); return; }
+  eventos.unshift({titulo:titulo, fecha:fecha, desc:desc, link:link, img:img, id:Date.now()});
+  saveEventos();
+  cerrarModal('modal-evento');
+  renderEventos();
+  toast('✓ Evento agregado');
+}
+
+function eliminarEvento(id) {
+  if (!confirm('¿Eliminar este evento?')) return;
+  eventos = eventos.filter(function(e){ return e.id !== id; });
+  saveEventos();
+  renderEventos();
+}
+
+function renderEventos() {
+  var el = document.getElementById('events-list');
+  // Show admin add button
+  var adminBtn = document.getElementById('admin-cal-add');
+  if (adminBtn) adminBtn.style.display = adminMode ? 'block' : 'none';
+
+  if (!eventos.length) {
+    el.innerHTML = '<p style="text-align:center;color:#888;padding:30px">No hay eventos próximos</p>';
+    return;
+  }
+  // Sort by date
+  var sorted = eventos.slice().sort(function(a,b){ return a.fecha > b.fecha ? 1 : -1; });
+  el.innerHTML = sorted.map(function(ev) {
+    var d = new Date(ev.fecha + 'T12:00:00');
+    var day = d.getDate();
+    var mon = d.toLocaleString('es-CR', {month:'short'}).toUpperCase();
+    var isPast = d < new Date();
+    return '<div class="cal-event" style="opacity:' + (isPast?'0.6':'1') + '">' +
+      '<div class="cal-event-header">' +
+        '<div class="cal-event-date"><div class="cal-event-day">' + day + '</div><div class="cal-event-mon">' + mon + '</div></div>' +
+        '<div class="cal-event-info">' +
+          '<div class="cal-event-title">' + ev.titulo + '</div>' +
+          (ev.desc ? '<div class="cal-event-desc">' + ev.desc + '</div>' : '') +
+        '</div>' +
+        (adminMode ? '<button onclick="eliminarEvento(' + ev.id + ')" style="background:none;border:none;color:#E74C3C;font-size:18px;cursor:pointer;flex-shrink:0">🗑</button>' : '') +
+      '</div>' +
+      (ev.img ? '<img src="' + ev.img + '" class="cal-event-img" onerror="this.style.display='none'">' : '') +
+      (ev.link ? '<a href="' + ev.link + '" target="_blank" class="cal-event-link">🔗 Ver más información</a>' : '') +
+    '</div>';
+  }).join('');
+}
+
+// ===== ASISTENCIA =====
+var asistencias = [];
+
+function loadAsistencias() {
+  try { asistencias = JSON.parse(localStorage.getItem('dk_asist') || '[]'); } catch(e){ asistencias=[]; }
+}
+function saveAsistencias() { localStorage.setItem('dk_asist', JSON.stringify(asistencias)); }
+
+function solicitarAsistencia() {
+  if (currentStudentId === null) return;
+  var s = students[currentStudentId];
+  var hoy = new Date().toISOString().split('T')[0];
+  // Check if already requested today
+  var yaHoy = asistencias.some(function(a){
+    return a.estudianteId === currentStudentId && a.fecha === hoy;
+  });
+  if (yaHoy) { toast('Ya solicitaste asistencia hoy'); return; }
+  asistencias.push({
+    id: Date.now(),
+    estudianteId: currentStudentId,
+    nombre: s.fullName,
+    gup: s.gup,
+    fecha: hoy,
+    hora: new Date().toLocaleTimeString('es-CR', {hour:'2-digit',minute:'2-digit'}),
+    estado: 'pendiente'
+  });
+  saveAsistencias();
+  toast('✓ Asistencia solicitada — el instructor la confirmará');
+  renderStudentAsistencia();
+}
+
+function aprobarAsistencia(id) {
+  asistencias = asistencias.map(function(a){
+    if (a.id === id) a.estado = 'confirmada';
+    return a;
+  });
+  saveAsistencias();
+  renderAsistenciaAdmin();
+  toast('✓ Asistencia confirmada');
+}
+
+function rechazarAsistencia(id) {
+  asistencias = asistencias.filter(function(a){ return a.id !== id; });
+  saveAsistencias();
+  renderAsistenciaAdmin();
+  toast('Solicitud rechazada');
+}
+
+function renderAsistenciaAdmin() {
+  var pending = asistencias.filter(function(a){ return a.estado === 'pendiente'; });
+  var confirmed = asistencias.filter(function(a){ return a.estado === 'confirmada'; }).slice().reverse();
+
+  var pEl = document.getElementById('asist-pending-list');
+  if (!pending.length) {
+    pEl.innerHTML = '<p style="color:#888;font-size:13px">No hay solicitudes pendientes ✓</p>';
+  } else {
+    pEl.innerHTML = pending.map(function(a) {
+      return '<div class="asist-pending">' +
+        '<div>' +
+          '<div class="asist-name">' + a.nombre + '</div>' +
+          '<div class="asist-date">' + a.fecha + ' · ' + a.hora + ' · ' + a.gup + '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;flex-shrink:0">' +
+          '<button class="asist-approve" onclick="aprobarAsistencia(' + a.id + ')">✓ OK</button>' +
+          '<button class="asist-reject" onclick="rechazarAsistencia(' + a.id + ')">✕</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  var cEl = document.getElementById('asist-confirmed-list');
+  if (!confirmed.length) {
+    cEl.innerHTML = '<p style="color:#888;font-size:13px">No hay asistencias registradas aún</p>';
+  } else {
+    cEl.innerHTML = confirmed.map(function(a) {
+      return '<div class="asist-item">' +
+        '<div>' +
+          '<div class="asist-name">' + a.nombre + '</div>' +
+          '<div class="asist-date">' + a.fecha + ' · ' + a.hora + '</div>' +
+        '</div>' +
+        '<span style="color:#2ECC71;font-size:18px">✓</span>' +
+      '</div>';
+    }).join('');
+  }
+}
+
+function renderStudentAsistencia() {
+  // Called from student profile - shows their attendance history
+  if (currentStudentId === null) return;
+  var myAsist = asistencias.filter(function(a){ return a.estudianteId === currentStudentId; });
+  var el = document.getElementById('student-asist-section');
+  if (!el) return;
+  var confirmed = myAsist.filter(function(a){ return a.estado === 'confirmada'; });
+  var pending = myAsist.filter(function(a){ return a.estado === 'pendiente'; });
+  var hoy = new Date().toISOString().split('T')[0];
+  var yaHoy = myAsist.some(function(a){ return a.fecha === hoy; });
+
+  el.innerHTML =
+    '<div class="sec-title">📋 MI ASISTENCIA</div>' +
+    (!yaHoy ? '<button class="asist-btn" onclick="solicitarAsistencia()">✋ Registrar asistencia de hoy</button>' :
+      '<div style="background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);border-radius:10px;padding:12px;margin-bottom:12px;color:#2ECC71;font-size:13px;font-weight:700;text-align:center">' +
+        (pending.length ? '⏳ Asistencia de hoy enviada — esperando confirmación del instructor' : '✓ Asistencia de hoy confirmada') +
+      '</div>') +
+    '<div style="font-size:12px;color:#888;margin-bottom:8px">Total confirmadas: <strong style="color:#2ECC71">' + confirmed.length + ' clases</strong></div>' +
+    confirmed.slice().reverse().slice(0,10).map(function(a){
+      return '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #1E3050;font-size:12px"><span>' + a.fecha + '</span><span style="color:#2ECC71">✓ Confirmada</span></div>';
+    }).join('') +
+    (confirmed.length > 10 ? '<div style="font-size:11px;color:#888;margin-top:6px">Mostrando últimas 10 de ' + confirmed.length + ' clases</div>' : '');
+}
+
+// ===== PAGO STATUS en perfil estudiante =====
+function getPaymentStatus(studentName) {
+  var mesActual = MESES[new Date().getMonth()];
+  var anioActual = new Date().getFullYear();
+  var pagoMes = pagos.filter(function(p){
+    return p.estudiante === studentName && p.mes === mesActual && parseInt(p.anio) === anioActual;
+  });
+  if (!pagoMes.length) return {status:'pendiente', mes:mesActual};
+  if (pagoMes[0].estado === 'Pagado') return {status:'pagado', mes:mesActual, monto:pagoMes[0].monto};
+  if (pagoMes[0].estado === 'Pago Parcial') return {status:'parcial', mes:mesActual, monto:pagoMes[0].monto};
+  return {status:'pendiente', mes:mesActual};
+}
+
+function renderPaymentStatusBanner(studentName) {
+  var ps = getPaymentStatus(studentName);
+  if (ps.status === 'pagado') {
+    return '<div class="pago-status-ok">' +
+      '<div class="pago-status-icon">✅</div>' +
+      '<div class="pago-status-text">' +
+        '<div class="pago-status-title" style="color:#2ECC71">Mensualidad al día</div>' +
+        '<div class="pago-status-sub" style="color:#2ECC71">' + ps.mes + ' · ₡' + parseFloat(ps.monto||0).toLocaleString('es-CR') + ' pagado</div>' +
+      '</div></div>';
+  } else if (ps.status === 'parcial') {
+    return '<div class="pago-status-warn">' +
+      '<div class="pago-status-icon">⚠️</div>' +
+      '<div class="pago-status-text">' +
+        '<div class="pago-status-title" style="color:#F1C40F">Pago parcial registrado</div>' +
+        '<div class="pago-status-sub" style="color:#F1C40F">' + ps.mes + ' — Consultá con tu instructor el saldo pendiente</div>' +
+      '</div></div>';
+  } else {
+    return '<div class="pago-status-warn">' +
+      '<div class="pago-status-icon">🔴</div>' +
+      '<div class="pago-status-text">' +
+        '<div class="pago-status-title" style="color:#E74C3C">Mensualidad pendiente</div>' +
+        '<div class="pago-status-sub" style="color:#E74C3C">' + ps.mes + ' — Por favor coordiná el pago con tu instructor</div>' +
+      '</div></div>';
+  }
+}
 
 // ===== ADMIN & PIN =====
 var ADMIN_PIN = '8031'; // PIN: 8031 (estudio 803 + 1)
@@ -858,7 +1147,29 @@ function exportarPDFTodos() {
   w.document.write('<table><thead><tr><th>Estudiante</th><th>Mes/Año</th><th>Fecha Pago</th><th>Monto</th><th>Estado</th><th>Código</th></tr></thead><tbody>' + rows + '</tbody></table>');
   w.document.write('<div class="total">Total pagado: ₡' + total.toLocaleString('es-CR') + '</div>');
   w.document.write('<div class="footer">Dan Kyul · Santa Ana, Costa Rica · Estudio 803 · WTSDA</div>');
-  w.document.write('</body></html>');
+  w.document.write('
+<!-- MODAL EVENTO -->
+<div class="modal" id="modal-evento">
+  <div class="modal-box">
+    <div class="modal-title">Agregar Evento</div>
+    <label class="form-lbl">TÍTULO DEL EVENTO</label>
+    <input type="text" id="ev-titulo" placeholder="Ej: Torneo Regional, Clínica, Examen...">
+    <label class="form-lbl">FECHA</label>
+    <input type="date" id="ev-fecha">
+    <label class="form-lbl">DESCRIPCIÓN</label>
+    <input type="text" id="ev-desc" placeholder="Descripción breve del evento">
+    <label class="form-lbl">LINK (opcional)</label>
+    <input type="text" id="ev-link" placeholder="https://wtsda.com/...">
+    <label class="form-lbl">IMAGEN/AFICHE (URL opcional)</label>
+    <input type="text" id="ev-img" placeholder="https://... (link de imagen)">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="cerrarModal('modal-evento')">Cancelar</button>
+      <button class="save-btn" style="margin:0" onclick="guardarEvento()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+</body></html>');
   w.document.close();
   setTimeout(function(){ w.print(); }, 400);
 }
@@ -991,7 +1302,7 @@ function studentLogout() {
 var _origGoView = goView;
 goView = function(v) {
   if (currentStudentId !== null && !adminMode) {
-    if (v === 'pagos') return;
+    if (v === 'pagos' || v === 'asistencia') return;
     if (v === 'inicio') { goStudentView(currentStudentId); return; }
   }
   _origGoView(v);
@@ -999,8 +1310,32 @@ goView = function(v) {
 
 // INIT
 load();
+loadEventos();
+loadAsistencias();
 checkAdminSession();
 renderCards();
 </script>
+
+<!-- MODAL EVENTO -->
+<div class="modal" id="modal-evento">
+  <div class="modal-box">
+    <div class="modal-title">Agregar Evento</div>
+    <label class="form-lbl">TÍTULO DEL EVENTO</label>
+    <input type="text" id="ev-titulo" placeholder="Ej: Torneo Regional, Clínica, Examen...">
+    <label class="form-lbl">FECHA</label>
+    <input type="date" id="ev-fecha">
+    <label class="form-lbl">DESCRIPCIÓN</label>
+    <input type="text" id="ev-desc" placeholder="Descripción breve del evento">
+    <label class="form-lbl">LINK (opcional)</label>
+    <input type="text" id="ev-link" placeholder="https://wtsda.com/...">
+    <label class="form-lbl">IMAGEN/AFICHE (URL opcional)</label>
+    <input type="text" id="ev-img" placeholder="https://... (link de imagen)">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="cerrarModal('modal-evento')">Cancelar</button>
+      <button class="save-btn" style="margin:0" onclick="guardarEvento()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
