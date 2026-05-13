@@ -198,6 +198,17 @@ body.admin-mode .admin-only{display:block}
   .test-hist-val{color:#2ECC71;font-weight:700}
   .asist-manual-btn{background:#1B3A6B;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-top:8px;width:100%}
 
+
+  /* RECURSOS */
+  .recursos-section{background:rgba(27,58,107,0.08);border:1px solid rgba(27,58,107,0.25);border-radius:12px;padding:16px;margin-bottom:16px}
+  .recurso-link{display:flex;align-items:center;gap:14px;padding:12px;background:#132035;border:1px solid #1E3050;border-radius:10px;margin-bottom:8px;text-decoration:none;cursor:pointer}
+  .recurso-link:active{background:#1E3050}
+  .recurso-icon{font-size:26px;flex-shrink:0;width:36px;text-align:center}
+  .recurso-info{flex:1}
+  .recurso-title{font-size:13px;font-weight:700;color:#fff}
+  .recurso-desc{font-size:11px;color:#888;margin-top:2px}
+  .recurso-arrow{color:#555;font-size:16px;flex-shrink:0}
+
 </style>
 </head>
 <body>
@@ -641,7 +652,7 @@ function goDetail(i) {
   document.getElementById('view-estudiantes').classList.add('on');
   document.getElementById('btn-estudiantes').classList.add('on');
   renderEstudiantes();
-  setTimeout(function(){ document.getElementById('detail-container').scrollIntoView({behavior:'smooth'}); tRender(i); }, 100);
+  setTimeout(function(){ document.getElementById('detail-container').scrollIntoView({behavior:'smooth'}); tRender(i); renderRecursos(); }, 100);
 }
 
 // ── RENDER DETAIL ─────────────────────────────────────────────────────────────
@@ -721,11 +732,16 @@ function renderDetail(i) {
     '<div class="divider"></div>' +
     '<div class="sec-title">🧠 ESTRATEGIA MENTAL Y EMOCIONAL</div>'+mentalH+
     '<div class="divider"></div>' +
+    '<div id="recursos-container"></div>' +
+    '<div class="divider"></div>' +
     '<div id="test-section-container"></div>' +
     '<div class="divider"></div>' +
     '<div class="sec-title">📊 EVALUACIÓN INDIVIDUAL</div>'+evalH+
     (adminMode ? '<button class="save-btn" onclick="saveEval('+i+')">💾 Guardar Evaluación</button>' +
       '<button class="asist-manual-btn" onclick="asistManual('+i+')">✋ Registrar asistencia manual de hoy</button>' : '');
+  // Render dynamic sections after innerHTML is set
+  tRender(i);
+  renderRecursos();
 }
 
 function toggleStep(si,stepI) {
@@ -1199,6 +1215,74 @@ function asistManual(si) {
   saveAsistencias();
   toast('Asistencia registrada: ' + fechaInput);
   renderAsistenciaAdmin();
+}
+
+
+// ===== RECURSOS =====
+var RECURSOS = [
+  {
+    icon: '🌐',
+    title: 'Sitio web Dan Kyul',
+    desc: 'dankyul.com - Informacion del estudio',
+    url: 'https://dankyul.com'
+  },
+  {
+    icon: '🌍',
+    title: 'WTSDA - World Tang Soo Do',
+    desc: 'Sitio oficial de la asociacion mundial',
+    url: 'https://worldtangsoodo.com/'
+  },
+  {
+    icon: '📸',
+    title: 'Instagram',
+    desc: '@somosdankyul - Videos y fotos del dojang',
+    url: 'https://instagram.com/somosdankyul'
+  },
+  {
+    icon: '📘',
+    title: 'Facebook',
+    desc: 'Dan Kyul Costa Rica',
+    url: 'https://www.facebook.com/DanKyulCostaRica'
+  },
+  {
+    icon: '📺',
+    title: 'YouTube - Estudio Dan Kyul',
+    desc: 'Videos de tecnicas y formas',
+    url: 'https://www.youtube.com/@estudiodankyulcostarica7198'
+  },
+  {
+    icon: '📗',
+    title: 'Manual Gup 2025 (ingles)',
+    desc: 'Manual oficial WTSDA para rangos Gup',
+    url: 'https://drive.google.com/drive/folders/1Dan_Kyul_803_Manuales'
+  },
+  {
+    icon: '📙',
+    title: 'Manual Gup (espanol)',
+    desc: 'Version en espanol para rangos Gup',
+    url: 'https://drive.google.com/drive/folders/1Dan_Kyul_803_Manuales'
+  }
+];
+
+function renderRecursos() {
+  var el = document.getElementById('recursos-container');
+  if (!el) return;
+  var html = '';
+  for (var i = 0; i < RECURSOS.length; i++) {
+    var r = RECURSOS[i];
+    html += '<a class="recurso-link" href="' + r.url + '" target="_blank">' +
+      '<div class="recurso-icon">' + r.icon + '</div>' +
+      '<div class="recurso-info">' +
+        '<div class="recurso-title">' + r.title + '</div>' +
+        '<div class="recurso-desc">' + r.desc + '</div>' +
+      '</div>' +
+      '<div class="recurso-arrow">&#8250;</div>' +
+    '</a>';
+  }
+  el.innerHTML = '<div class="recursos-section">' +
+    '<div class="sec-title">&#128279; RECURSOS Y ENLACES</div>' +
+    html +
+  '</div>';
 }
 
 load();
