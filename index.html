@@ -722,7 +722,8 @@ function renderDetail(i) {
     '<div class="sec-title">🧠 ESTRATEGIA MENTAL Y EMOCIONAL</div>'+mentalH+
     '<div class="divider"></div>' +
     '<div class="sec-title">📊 EVALUACIÓN INDIVIDUAL</div>'+evalH+
-    (adminMode ? '<button class="save-btn" onclick="saveEval('+i+')">💾 Guardar Evaluación</button>' : '');
+    (adminMode ? '<button class="save-btn" onclick="saveEval('+i+')">💾 Guardar Evaluación</button>' +
+      '<button class="asist-manual-btn" onclick="asistManual('+i+')">✋ Registrar asistencia manual de hoy</button>' : '');
 }
 
 function toggleStep(si,stepI) {
