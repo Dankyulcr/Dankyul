@@ -181,32 +181,22 @@ select option{background:#0D1B2A}
 .admin-only{display:none}
 body.admin-mode .admin-only{display:block}
 
-  /* ===== PRUEBAS FÍSICAS ===== */
+  /* PRUEBAS FÍSICAS */
   .test-section{background:rgba(27,58,107,0.08);border:1px solid rgba(27,58,107,0.25);border-radius:12px;padding:16px;margin-bottom:16px}
   .test-tabs{display:flex;gap:0;border-bottom:1px solid #1E3050;margin-bottom:14px;overflow-x:auto}
-  .test-tab{padding:8px 14px;font-size:11px;font-weight:700;color:#888;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;letter-spacing:0.5px;font-family:Arial}
+  .test-tab{padding:8px 14px;font-size:11px;font-weight:700;color:#888;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-family:Arial}
   .test-tab.on{color:#fff;border-bottom-color:#C8102E}
   .test-card{background:#132035;border:1px solid #1E3050;border-radius:10px;padding:14px;margin-bottom:10px}
   .test-name{font-size:13px;font-weight:700;color:#fff;margin-bottom:10px}
   .test-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
   .test-label{font-size:11px;color:#888;flex:1;min-width:80px}
-  .test-input{background:#1E3050;border:1px solid #2a4070;border-radius:6px;padding:6px 10px;color:#fff;font-size:13px;font-family:Arial;width:80px;text-align:center}
+  .test-input{background:#1E3050;border:1px solid #2a4070;border-radius:6px;padding:6px 10px;color:#fff;font-size:14px;font-family:Arial;width:80px;text-align:center}
   .test-input:focus{outline:none;border-color:#C8102E}
-  .test-stars{display:flex;gap:3px;align-items:center}
-  .test-star{font-size:16px;cursor:pointer;color:#1E3050}
-  .test-star.on{color:#F0C040}
-  .test-ref{font-size:10px;color:#555;margin-top:4px;line-height:1.4}
+  .test-ref{font-size:10px;color:#555;margin-top:4px;line-height:1.5}
   .test-save-btn{background:#1B3A6B;color:#fff;border:none;padding:10px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;width:100%;margin-top:8px}
-  .test-history{margin-top:10px}
   .test-hist-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1E3050;font-size:12px}
   .test-hist-date{color:#888}
   .test-hist-val{color:#2ECC71;font-weight:700}
-  .test-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;margin-left:6px}
-  .test-badge-1{background:rgba(231,76,60,0.2);color:#E74C3C}
-  .test-badge-2{background:rgba(230,126,22,0.2);color:#E67E22}
-  .test-badge-3{background:rgba(52,152,219,0.2);color:#3498DB}
-  .test-badge-4{background:rgba(46,204,113,0.2);color:#2ECC71}
-  .test-badge-5{background:rgba(212,175,55,0.2);color:#F0C040}
 
 </style>
 </head>
@@ -339,7 +329,7 @@ body.admin-mode .admin-only{display:block}
     <div id="recibo-content"></div>
     <div class="print-btns">
       <button class="btn-print" onclick="imprimirRecibo()">🖨 PDF</button>
-      <button class="btn-share" onclick="compartirRecibo()">📤 Compartir imagen</button>
+      <button class="btn-share" onclick="compartirRecibo()">📤 Compartir</button>
       <button class="btn-cancel" style="border-radius:8px" onclick="cerrarModal('modal-recibo')">Cerrar</button>
     </div>
   </div>
@@ -445,10 +435,6 @@ function cerrarModal(id) { document.getElementById(id).classList.remove('on'); }
 function goView(v) {
   if (!adminMode && currentStudentId === null) return;
   if (!adminMode && (v === 'pagos' || v === 'asistencia')) return;
-  // Students going to inicio → redirect to their profile
-  if (!adminMode && currentStudentId !== null && v === 'inicio') {
-    goViewStudent(); return;
-  }
   document.querySelectorAll('.view').forEach(function(el){ el.classList.remove('on'); });
   document.querySelectorAll('.bnav-btn').forEach(function(el){ el.classList.remove('on'); });
   var vEl = document.getElementById('view-' + v);
@@ -537,6 +523,7 @@ function intentarLoginEstudiante() {
     clearEntry('pinPad','d',null);
     return;
   }
+  load();
   currentStudentId = parseInt(idx);
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('studentBar').style.display = 'flex';
@@ -549,22 +536,18 @@ function goViewStudent() {
   document.querySelectorAll('.bnav-btn').forEach(function(el){ el.classList.remove('on'); });
   document.getElementById('view-estudiantes').classList.add('on');
   document.getElementById('btn-estudiantes').classList.add('on');
-  currentStudent = currentStudentId;
-  document.getElementById('pills-container').innerHTML = '';
-  renderDetail(currentStudentId);
-  // Show Eventos for students, hide admin-only
   document.getElementById('btn-inicio').style.display = 'none';
   document.getElementById('btn-pagos').style.display = 'none';
   document.getElementById('btn-asistencia').style.display = 'none';
   document.getElementById('btn-eventos').style.display = '';
+  currentStudent = currentStudentId;
+  document.getElementById('pills-container').innerHTML = '';
+  renderDetail(currentStudentId);
 }
 
 function cerrarSesionEstudiante() {
   currentStudentId = null;
   currentStudent = null;
-  document.getElementById('btn-inicio').style.display = '';
-  document.getElementById('btn-pagos').style.display = '';
-  document.getElementById('btn-eventos').style.display = '';
   mostrarLogin();
 }
 
@@ -604,7 +587,6 @@ function cerrarSesionAdmin() {
   adminMode = false;
   document.body.classList.remove('admin-mode');
   document.getElementById('modeBar').style.display = 'none';
-  // Reload all data so student sees latest changes
   load();
   mostrarLogin();
 }
@@ -793,186 +775,6 @@ function renderAsistenciaBotón(i) {
     '<div style="font-size:12px;color:#888;margin-bottom:14px">Total confirmadas: <strong style="color:#2ECC71">'+confirmadas.length+' clases</strong></div>';
 }
 
-
-// ===== PRUEBAS FÍSICAS =====
-var TEST_REFS = {
-  lagartijas:   [[0,5,10,15,20],[0,4,8,13,18],[0,8,15,20,25],[0,6,12,18,24]],
-  abdominales:  [[0,8,15,22,29],[0,6,12,18,25],[0,12,20,28,35],[0,8,14,20,26]],
-  sentadillas:  [[0,10,18,25,32],[0,8,15,22,29],[0,15,25,35,45],[0,10,17,24,30]],
-  jumpingjacks: [[0,20,35,50,65],[0,15,27,39,51],[0,30,45,60,75],[0,20,32,44,56]],
-  jungkwon:     [[0,20,35,50,65],[0,18,30,45,60],[0,30,50,70,90],[0,20,35,50,65]],
-  ahpchaki:     [[0,12,20,28,35],[0,10,17,24,31],[0,20,30,40,50],[0,12,19,26,33]],
-  yupchaki:     [[0,8,14,19,24],[0,6,11,16,21],[0,14,20,26,32],[0,8,13,18,23]],
-  tollyo:       [[0,6,11,16,21],[0,5,9,14,19],[0,10,16,22,28],[0,6,10,15,20]],
-  comb2:        [[0,6,11,16,21],[0,5,8,13,17],[0,10,15,20,25],[0,6,10,14,18]],
-  comb3:        [[0,4,7,10,13],[0,3,6,9,12],[0,7,11,15,19],[0,4,7,10,13]],
-  comb_doble:   [[0,0,3,6,9],[0,3,6,9,12],[0,5,9,13,17],[0,3,6,9,12]]
-};
-var TEST_NAMES = {
-  lagartijas:'Lagartijas (1 min)',
-  abdominales:'Abdominales (1 min)',
-  sentadillas:'Sentadillas (1 min)',
-  jumpingjacks:'Jumping Jacks (1 min)',
-  jungkwon:'Jung Kwon - Puños (1 min)',
-  ahpchaki:'Ahp Cha Ki - Frontal (1 min)',
-  yupchaki:'Yup Cha Ki - Lateral (1 min)',
-  tollyo:'Tollyo Cha Ki - Giratoria (1 min)',
-  comb2:'Combinación: Puño + Patada (1 min)',
-  comb3:'Combinación: Bloqueo + Puño + Patada (1 min)',
-  comb_doble:'Combinación doble patada misma pierna (1 min)'
-};
-var TEST_GROUPS = {
-  resistencia:['lagartijas','abdominales','sentadillas','jumpingjacks'],
-  velocidad:['jungkwon','ahpchaki','yupchaki','tollyo'],
-  combinaciones:['comb2','comb3','comb_doble']
-};
-
-function getAgeGroup(age) {
-  if (!age || age < 7) return -1;
-  if (age <= 12) return 0;
-  if (age <= 17) return 1;
-  if (age <= 45) return 2;
-  return 3;
-}
-
-function getStars(key, val, ag) {
-  if (ag < 0 || !TEST_REFS[key]) return 0;
-  var t = TEST_REFS[key][ag];
-  for (var i = 4; i >= 0; i--) { if (val >= t[i]) return i+1; }
-  return 1;
-}
-
-function starsDisplay(n) {
-  var h = '';
-  for (var i=1;i<=5;i++) h += '<span style="color:'+(i<=n?'#F0C040':'#1E3050')+';font-size:13px">&#9733;</span>';
-  return h;
-}
-
-function rateTestQual(si, key, val) {
-  if (!evals[si]) evals[si]={};
-  evals[si]['tq_'+key]=val;
-  for (var n=1;n<=5;n++) {
-    var el=document.getElementById('tqs_'+key+'_'+n);
-    if(el) el.style.color = n<=val?'#F0C040':'#1E3050';
-  }
-}
-
-function showTestTab(si, tab) {
-  ['resistencia','velocidad','combinaciones','defensa'].forEach(function(t){
-    var p=document.getElementById('tp_'+t);
-    var b=document.getElementById('tb_'+t);
-    if(p) p.style.display = t===tab?'block':'none';
-    if(b) b.className = 'test-tab'+(t===tab?' on':'');
-  });
-}
-
-function saveTestData(si) {
-  if(!evals[si]) evals[si]={};
-  var s=students[si];
-  var ag=getAgeGroup(s.age);
-  var fecha=new Date().toISOString().split('T')[0];
-  Object.keys(TEST_NAMES).forEach(function(key){
-    var inp=document.getElementById('ti_'+key);
-    if(inp && inp.value!=='') {
-      var val=parseInt(inp.value)||0;
-      var stars=getStars(key,val,ag);
-      if(!evals[si]['th_'+key]) evals[si]['th_'+key]=[];
-      evals[si]['th_'+key].push({f:fecha,v:val,s:stars});
-      evals[si]['tl_'+key]={f:fecha,v:val,s:stars};
-    }
-  });
-  ['hosinmano','hosinbong'].forEach(function(key){
-    var val=evals[si]['tq_'+key]||0;
-    if(val>0){
-      if(!evals[si]['th_'+key]) evals[si]['th_'+key]=[];
-      evals[si]['th_'+key].push({f:fecha,v:val,s:val});
-      evals[si]['tl_'+key]={f:fecha,v:val,s:val};
-    }
-  });
-  saveEvals();
-  toast('Pruebas guardadas');
-  renderTestSection(si);
-}
-
-function renderTestSection(si) {
-  var el=document.getElementById('test-section-container');
-  if(!el) return;
-  var s=students[si];
-  var saved=evals[si]||{};
-  var ag=getAgeGroup(s.age);
-  var agLabels=['Infantil 7-12','Juvenil 13-17','Adulto 18-45','Adulto Mayor 46+'];
-  var agLabel=ag>=0?agLabels[ag]:'Tiny Tiger';
-
-  if(s.gup==='Tiny Tiger'){
-    el.innerHTML='<div class="test-section"><div class="sec-title">&#127939; PRUEBAS FÍSICAS</div>'+
-      '<div style="text-align:center;color:#888;padding:16px;font-size:13px">No aplican pruebas formales para Tiny Tiger.<br>Observar coordinación básica en el juego.</div></div>';
-    return;
-  }
-
-  function numPanel(keys){
-    return keys.map(function(key){
-      var last=saved['tl_'+key];
-      var hist=saved['th_'+key]||[];
-      var stars=last?last.s:0;
-      return '<div class="test-card">'+
-        '<div class="test-name">'+TEST_NAMES[key]+'</div>'+
-        '<div class="test-row">'+
-          '<span class="test-label">Resultado:</span>'+
-          '<input class="test-input" type="number" id="ti_'+key+'" placeholder="0" min="0"'+(last?' value="'+last.v+'"':'')+'>'+
-          '<div class="test-stars">'+starsDisplay(stars)+'</div>'+
-        '</div>'+
-        (last?'<div class="test-ref">&#218;ltima: '+last.v+' reps &middot; '+last.f+'</div>':'')+
-        (hist.length>1?'<div class="test-history">'+hist.slice(-3).reverse().map(function(h){
-          return '<div class="test-hist-row"><span class="test-hist-date">'+h.f+'</span>'+
-            '<span class="test-hist-val">'+h.v+' reps &nbsp;'+starsDisplay(h.s)+'</span></div>';
-        }).join('')+'</div>':'')+
-      '</div>';
-    }).join('');
-  }
-
-  function qualPanel(){
-    return ['hosinmano','hosinbong'].map(function(key){
-      var labels={hosinmano:'Ho Sin Sul &#8212; Mano Vac&#237;a',hosinbong:'Ho Sin Sul &#8212; Bong (bast&#243;n)'};
-      var isBong=key==='hosinbong';
-      var danRanks=['Cho Dan','E Dan','Sam Dan','Sah Dan'];
-      var hasDan=danRanks.some(function(r){return s.gup.indexOf(r)!==-1;});
-      if(isBong && !hasDan){
-        return '<div class="test-card"><div class="test-name">'+labels[key]+'</div>'+
-          '<div style="color:#555;font-size:12px">No aplica para este rango a&#250;n</div></div>';
-      }
-      var curVal=saved['tq_'+key]||0;
-      var last=saved['tl_'+key];
-      var starsHtml='';
-      for(var n=1;n<=5;n++){
-        starsHtml+='<span id="tqs_'+key+'_'+n+'" style="font-size:24px;cursor:pointer;color:'+(n<=curVal?'#F0C040':'#1E3050')+'" onclick="rateTestQual('+si+',''+key+'','+n+')">&#9733;</span>';
-      }
-      return '<div class="test-card">'+
-        '<div class="test-name">'+labels[key]+'</div>'+
-        '<div class="test-row"><span class="test-label">Calificaci&#243;n:</span>'+starsHtml+'</div>'+
-        '<div class="test-ref">1&#9733; Inicio &middot; 2&#9733; B&#225;sico &middot; 3&#9733; Intermedio &middot; 4&#9733; Avanzado &middot; 5&#9733; Experto</div>'+
-        (last?'<div class="test-ref">&#218;ltima: '+last.f+'</div>':'')+
-      '</div>';
-    }).join('');
-  }
-
-  el.innerHTML=
-    '<div class="test-section">'+
-      '<div class="sec-title">&#127939; PRUEBAS F&#205;SICAS &#8212; '+agLabel.toUpperCase()+'</div>'+
-      '<div class="test-tabs">'+
-        '<button class="test-tab on" id="tb_resistencia" onclick="showTestTab('+si+','resistencia')">&#128170; Resistencia</button>'+
-        '<button class="test-tab" id="tb_velocidad" onclick="showTestTab('+si+','velocidad')">&#9889; Velocidad</button>'+
-        '<button class="test-tab" id="tb_combinaciones" onclick="showTestTab('+si+','combinaciones')">&#129354; Combinaciones</button>'+
-        '<button class="test-tab" id="tb_defensa" onclick="showTestTab('+si+','defensa')">&#128737; Defensa</button>'+
-      '</div>'+
-      '<div id="tp_resistencia">'+numPanel(TEST_GROUPS.resistencia)+'</div>'+
-      '<div id="tp_velocidad" style="display:none">'+numPanel(TEST_GROUPS.velocidad)+'</div>'+
-      '<div id="tp_combinaciones" style="display:none">'+numPanel(TEST_GROUPS.combinaciones)+'</div>'+
-      '<div id="tp_defensa" style="display:none">'+qualPanel()+'</div>'+
-      '<button class="test-save-btn" onclick="saveTestData('+si+')">&#128190; Guardar Pruebas F&#237;sicas</button>'+
-    '</div>';
-}
-
-
 function solicitarAsistencia(i) {
   var s = students[i];
   var hoy = new Date().toISOString().split('T')[0];
@@ -1107,7 +909,6 @@ function eliminarPago(codigo) {
 }
 
 function verRecibo(idx) {
-  // Preload html2canvas
   if (typeof html2canvas === 'undefined') {
     var s = document.createElement('script');
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
@@ -1143,64 +944,35 @@ function imprimirRecibo() {
 function compartirRecibo() {
   var el = document.getElementById('recibo-print');
   if (!el) { toast('Error: no hay recibo'); return; }
-  
-  // Check if html2canvas is loaded
   if (typeof html2canvas === 'undefined') {
-    toast('Cargando... intentá de nuevo en 2 segundos');
+    toast('Cargando... intentá de nuevo');
     var s = document.createElement('script');
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-    s.onload = function() { compartirRecibo(); };
+    s.onload = function(){ compartirRecibo(); };
     document.head.appendChild(s);
     return;
   }
-
   toast('Generando imagen...');
-  html2canvas(el, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: '#ffffff',
-    logging: false
-  }).then(function(canvas) {
+  html2canvas(el, {scale:2,useCORS:true,backgroundColor:'#ffffff'}).then(function(canvas) {
     canvas.toBlob(function(blob) {
       if (!blob) { toast('Error generando imagen'); return; }
       var file = new File([blob], 'Recibo-DanKyul.png', {type:'image/png'});
       if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
-        navigator.share({
-          title: 'Recibo Dan Kyul 803',
-          text: 'Recibo de mensualidad Dan Kyul Santa Ana',
-          files: [file]
-        }).catch(function(e){ 
-          if (e.name !== 'AbortError') compartirComoTexto();
-        });
-      } else if (navigator.share) {
-        // Share as image URL
-        var url = canvas.toDataURL('image/png');
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = 'Recibo-DanKyul.png';
-        a.click();
-        toast('Imagen descargada — compartila desde tu galería');
+        navigator.share({title:'Recibo Dan Kyul 803', files:[file]})
+          .catch(function(e){ if(e.name!=='AbortError') descargarRecibo(canvas); });
       } else {
-        var url = canvas.toDataURL('image/png');
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = 'Recibo-DanKyul.png';
-        a.click();
-        toast('Imagen descargada — compartila desde tu galería');
+        descargarRecibo(canvas);
       }
     }, 'image/png');
-  }).catch(function() {
-    compartirComoTexto();
-  });
+  }).catch(function(){ toast('Error al generar imagen'); });
 }
 
-function compartirComoTexto() {
-  var texto = document.getElementById('recibo-print').innerText;
-  if (navigator.share) {
-    navigator.share({title:'Recibo Dan Kyul',text:texto});
-  } else {
-    navigator.clipboard.writeText(texto).then(function(){ toast('Recibo copiado'); });
-  }
+function descargarRecibo(canvas) {
+  var a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = 'Recibo-DanKyul.png';
+  a.click();
+  toast('Imagen descargada - compartila desde tu galería');
 }
 
 function exportarExcel() {
@@ -1225,6 +997,104 @@ function exportarPDF() {
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
+
+// ===== PRUEBAS FÍSICAS =====
+var TEST_REFS = {
+  lagartijas:   [[0,5,10,15,20],[0,4,8,13,18],[0,8,15,20,25],[0,6,12,18,24]],
+  abdominales:  [[0,8,15,22,29],[0,6,12,18,25],[0,12,20,28,35],[0,8,14,20,26]],
+  sentadillas:  [[0,10,18,25,32],[0,8,15,22,29],[0,15,25,35,45],[0,10,17,24,30]],
+  jumpingjacks: [[0,20,35,50,65],[0,15,27,39,51],[0,30,45,60,75],[0,20,32,44,56]],
+  jungkwon:     [[0,20,35,50,65],[0,18,30,45,60],[0,30,50,70,90],[0,20,35,50,65]],
+  ahpchaki:     [[0,12,20,28,35],[0,10,17,24,31],[0,20,30,40,50],[0,12,19,26,33]],
+  yupchaki:     [[0,8,14,19,24],[0,6,11,16,21],[0,14,20,26,32],[0,8,13,18,23]],
+  tollyo:       [[0,6,11,16,21],[0,5,9,14,19],[0,10,16,22,28],[0,6,10,15,20]],
+  comb2:        [[0,6,11,16,21],[0,5,8,13,17],[0,10,15,20,25],[0,6,10,14,18]],
+  comb3:        [[0,4,7,10,13],[0,3,6,9,12],[0,7,11,15,19],[0,4,7,10,13]],
+  comb_doble:   [[0,0,3,6,9],[0,3,6,9,12],[0,5,9,13,17],[0,3,6,9,12]]
+};
+var TEST_NAMES = {
+  lagartijas:'Lagartijas (1 min)',abdominales:'Abdominales (1 min)',
+  sentadillas:'Sentadillas (1 min)',jumpingjacks:'Jumping Jacks (1 min)',
+  jungkwon:'Jung Kwon - Puños (1 min)',ahpchaki:'Ahp Cha Ki - Frontal (1 min)',
+  yupchaki:'Yup Cha Ki - Lateral (1 min)',tollyo:'Tollyo Cha Ki - Giratoria (1 min)',
+  comb2:'Combinación: Puño + Patada (1 min)',
+  comb3:'Combinación: Bloqueo + Puño + Patada (1 min)',
+  comb_doble:'Combinación doble patada misma pierna (1 min)'
+};
+var TEST_GRP={resistencia:['lagartijas','abdominales','sentadillas','jumpingjacks'],velocidad:['jungkwon','ahpchaki','yupchaki','tollyo'],combinaciones:['comb2','comb3','comb_doble']};
+function getAG(age){if(!age||age<7)return -1;if(age<=12)return 0;if(age<=17)return 1;if(age<=45)return 2;return 3;}
+function getStars(key,val,ag){if(ag<0||!TEST_REFS[key])return 0;var t=TEST_REFS[key][ag];for(var i=4;i>=0;i--){if(val>=t[i])return i+1;}return 1;}
+function starDisp(n){var h='';for(var i=1;i<=5;i++)h+='<span style="color:'+(i<=n?'#F0C040':'#1E3050')+';font-size:14px">&#9733;</span>';return h;}
+function rateQual(si,key,val){
+  if(!evals[si])evals[si]={};evals[si]['tq_'+key]=val;
+  for(var n=1;n<=5;n++){var e=document.getElementById('tqs_'+key+'_'+n);if(e)e.style.color=n<=val?'#F0C040':'#1E3050';}
+}
+function showTestTab(si,tab){
+  ['resistencia','velocidad','combinaciones','defensa'].forEach(function(t){
+    var p=document.getElementById('tp_'+t);var b=document.getElementById('tb_'+t);
+    if(p)p.style.display=t===tab?'block':'none';
+    if(b)b.className='test-tab'+(t===tab?' on':'');
+  });
+}
+function saveTestData(si){
+  if(!evals[si])evals[si]={};
+  var s=students[si];var ag=getAG(s.age);var fecha=new Date().toISOString().split('T')[0];
+  Object.keys(TEST_NAMES).forEach(function(key){
+    var inp=document.getElementById('ti_'+key);
+    if(inp&&inp.value!==''){var val=parseInt(inp.value)||0;var stars=getStars(key,val,ag);
+      if(!evals[si]['th_'+key])evals[si]['th_'+key]=[];
+      evals[si]['th_'+key].push({f:fecha,v:val,s:stars});evals[si]['tl_'+key]={f:fecha,v:val,s:stars};}
+  });
+  ['hosinmano','hosinbong'].forEach(function(key){
+    var val=evals[si]['tq_'+key]||0;
+    if(val>0){if(!evals[si]['th_'+key])evals[si]['th_'+key]=[];
+      evals[si]['th_'+key].push({f:fecha,v:val,s:val});evals[si]['tl_'+key]={f:fecha,v:val,s:val};}
+  });
+  saveEvals();toast('Pruebas guardadas');renderTestSection(si);
+}
+function renderTestSection(si){
+  var el=document.getElementById('test-section-container');if(!el)return;
+  var s=students[si];var saved=evals[si]||{};var ag=getAG(s.age);
+  var agl=['Infantil 7-12','Juvenil 13-17','Adulto 18-45','Adulto Mayor 46+'];
+  if(s.gup==='Tiny Tiger'){el.innerHTML='<div class="test-section"><div class="sec-title">&#127939; PRUEBAS FÍSICAS</div><div style="text-align:center;color:#888;padding:16px;font-size:13px">No aplican pruebas formales para Tiny Tiger.</div></div>';return;}
+  function numP(keys){return keys.map(function(key){
+    var last=saved['tl_'+key];var hist=saved['th_'+key]||[];var stars=last?last.s:0;
+    return '<div class="test-card"><div class="test-name">'+TEST_NAMES[key]+'</div>'+
+      '<div class="test-row"><span class="test-label">Repeticiones:</span>'+
+        '<input class="test-input" type="number" id="ti_'+key+'" placeholder="0" min="0"'+(last?' value="'+last.v+'"':'')+'>'+
+        '<div>'+starDisp(stars)+'</div></div>'+
+      (last?'<div class="test-ref">Última: '+last.v+' &middot; '+last.f+'</div>':'')+
+      (hist.length>1?'<div style="margin-top:6px">'+hist.slice(-3).reverse().map(function(h){
+        return '<div class="test-hist-row"><span class="test-hist-date">'+h.f+'</span><span class="test-hist-val">'+h.v+' reps &nbsp;'+starDisp(h.s)+'</span></div>';
+      }).join('')+'</div>':'')+
+    '</div>';}).join('');}
+  function qualP(){return ['hosinmano','hosinbong'].map(function(key){
+    var labels={hosinmano:'Ho Sin Sul — Mano Vacía',hosinbong:'Ho Sin Sul — Bong'};
+    var hasDan=['Cho Dan','E Dan','Sam Dan','Sah Dan'].some(function(r){return s.gup.indexOf(r)!==-1;});
+    if(key==='hosinbong'&&!hasDan)return '<div class="test-card"><div class="test-name">'+labels[key]+'</div><div style="color:#555;font-size:12px">No aplica para este rango aún</div></div>';
+    var cur=saved['tq_'+key]||0;var last=saved['tl_'+key];
+    var stH='';for(var n=1;n<=5;n++)stH+='<span id="tqs_'+key+'_'+n+'" style="font-size:24px;cursor:pointer;color:'+(n<=cur?'#F0C040':'#1E3050')+'" onclick="rateQual('+si+',''+key+'','+n+')">&#9733;</span>';
+    return '<div class="test-card"><div class="test-name">'+labels[key]+'</div>'+
+      '<div class="test-row"><span class="test-label">Calificación:</span>'+stH+'</div>'+
+      '<div class="test-ref">1&#9733; Inicio &middot; 2&#9733; Básico &middot; 3&#9733; Intermedio &middot; 4&#9733; Avanzado &middot; 5&#9733; Experto</div>'+
+      (last?'<div class="test-ref">Última: '+last.f+'</div>':'')+
+    '</div>';}).join('');}
+  el.innerHTML='<div class="test-section">'+
+    '<div class="sec-title">&#127939; PRUEBAS FÍSICAS — '+(ag>=0?agl[ag]:'Tiny Tiger').toUpperCase()+'</div>'+
+    '<div class="test-tabs">'+
+      '<button class="test-tab on" id="tb_resistencia" onclick="showTestTab('+si+','resistencia')">&#128170; Resistencia</button>'+
+      '<button class="test-tab" id="tb_velocidad" onclick="showTestTab('+si+','velocidad')">&#9889; Velocidad</button>'+
+      '<button class="test-tab" id="tb_combinaciones" onclick="showTestTab('+si+','combinaciones')">&#129354; Combinaciones</button>'+
+      '<button class="test-tab" id="tb_defensa" onclick="showTestTab('+si+','defensa')">&#128737; Defensa</button>'+
+    '</div>'+
+    '<div id="tp_resistencia">'+numP(TEST_GRP.resistencia)+'</div>'+
+    '<div id="tp_velocidad" style="display:none">'+numP(TEST_GRP.velocidad)+'</div>'+
+    '<div id="tp_combinaciones" style="display:none">'+numP(TEST_GRP.combinaciones)+'</div>'+
+    '<div id="tp_defensa" style="display:none">'+qualP()+'</div>'+
+    '<button class="test-save-btn" onclick="saveTestData('+si+')">&#128190; Guardar Pruebas Físicas</button>'+
+  '</div>';
+}
+
 load();
 
 // Build PIN pads
