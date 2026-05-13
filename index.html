@@ -180,6 +180,24 @@ select option{background:#0D1B2A}
 /* ADMIN ONLY */
 .admin-only{display:none}
 body.admin-mode .admin-only{display:block}
+
+  .test-section{background:rgba(27,58,107,0.08);border:1px solid rgba(27,58,107,0.25);border-radius:12px;padding:16px;margin-bottom:16px}
+  .test-tabs{display:flex;gap:0;border-bottom:1px solid #1E3050;margin-bottom:14px;overflow-x:auto}
+  .test-tab{padding:8px 14px;font-size:11px;font-weight:700;color:#888;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-family:Arial}
+  .test-tab.on{color:#fff;border-bottom-color:#C8102E}
+  .test-card{background:#132035;border:1px solid #1E3050;border-radius:10px;padding:14px;margin-bottom:10px}
+  .test-name{font-size:13px;font-weight:700;color:#fff;margin-bottom:10px}
+  .test-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+  .test-label{font-size:11px;color:#888;flex:1;min-width:80px}
+  .test-input{background:#1E3050;border:1px solid #2a4070;border-radius:6px;padding:6px 10px;color:#fff;font-size:14px;font-family:Arial;width:80px;text-align:center}
+  .test-input:focus{outline:none;border-color:#C8102E}
+  .test-ref{font-size:10px;color:#555;margin-top:4px;line-height:1.5}
+  .test-save-btn{background:#1B3A6B;color:#fff;border:none;padding:10px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;width:100%;margin-top:8px}
+  .test-hist-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1E3050;font-size:12px}
+  .test-hist-date{color:#888}
+  .test-hist-val{color:#2ECC71;font-weight:700}
+  .asist-manual-btn{background:#1B3A6B;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-top:8px;width:100%}
+
 </style>
 </head>
 <body>
@@ -969,6 +987,210 @@ function exportarPDF() {
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
+
+// ===== PRUEBAS FISICAS =====
+var TREFS = {
+  lagartijas:   [[0,5,10,15,20],[0,4,8,13,18],[0,8,15,20,25],[0,6,12,18,24]],
+  abdominales:  [[0,8,15,22,29],[0,6,12,18,25],[0,12,20,28,35],[0,8,14,20,26]],
+  sentadillas:  [[0,10,18,25,32],[0,8,15,22,29],[0,15,25,35,45],[0,10,17,24,30]],
+  jumping:      [[0,20,35,50,65],[0,15,27,39,51],[0,30,45,60,75],[0,20,32,44,56]],
+  jungkwon:     [[0,20,35,50,65],[0,18,30,45,60],[0,30,50,70,90],[0,20,35,50,65]],
+  ahpchaki:     [[0,12,20,28,35],[0,10,17,24,31],[0,20,30,40,50],[0,12,19,26,33]],
+  yupchaki:     [[0,8,14,19,24],[0,6,11,16,21],[0,14,20,26,32],[0,8,13,18,23]],
+  tollyo:       [[0,6,11,16,21],[0,5,9,14,19],[0,10,16,22,28],[0,6,10,15,20]],
+  comb2:        [[0,6,11,16,21],[0,5,8,13,17],[0,10,15,20,25],[0,6,10,14,18]],
+  comb3:        [[0,4,7,10,13],[0,3,6,9,12],[0,7,11,15,19],[0,4,7,10,13]],
+  combdoble:    [[0,0,3,6,9],[0,3,6,9,12],[0,5,9,13,17],[0,3,6,9,12]]
+};
+var TNAMES = {
+  lagartijas:  'Lagartijas (1 min)',
+  abdominales: 'Abdominales (1 min)',
+  sentadillas: 'Sentadillas (1 min)',
+  jumping:     'Jumping Jacks (1 min)',
+  jungkwon:   'Jung Kwon - Punos (1 min)',
+  ahpchaki:   'Ahp Cha Ki - Frontal (1 min)',
+  yupchaki:   'Yup Cha Ki - Lateral (1 min)',
+  tollyo:     'Tollyo Cha Ki - Giratoria (1 min)',
+  comb2:      'Comb. 2 tiempos: Puno + Patada (1 min)',
+  comb3:      'Comb. 3 tiempos: Bloqueo + Puno + Patada (1 min)',
+  combdoble:  'Comb. doble patada misma pierna (1 min)'
+};
+var TGRP = {
+  res: ['lagartijas','abdominales','sentadillas','jumping'],
+  vel: ['jungkwon','ahpchaki','yupchaki','tollyo'],
+  com: ['comb2','comb3','combdoble']
+};
+function tGetAG(age) {
+  if (!age || age < 7) return -1;
+  if (age <= 12) return 0;
+  if (age <= 17) return 1;
+  if (age <= 45) return 2;
+  return 3;
+}
+function tGetStars(key, val, ag) {
+  if (ag < 0 || !TREFS[key]) return 0;
+  var t = TREFS[key][ag];
+  for (var i = 4; i >= 0; i--) { if (val >= t[i]) return i + 1; }
+  return 1;
+}
+function tStarHtml(n) {
+  var h = '';
+  for (var i = 1; i <= 5; i++) {
+    h += '<span style="color:' + (i <= n ? '#F0C040' : '#1E3050') + ';font-size:14px">&#9733;</span>';
+  }
+  return h;
+}
+function tRateQual(si, key, val) {
+  if (!evals[si]) evals[si] = {};
+  evals[si]['tq_' + key] = val;
+  for (var n = 1; n <= 5; n++) {
+    var el = document.getElementById('tqs_' + key + '_' + n);
+    if (el) el.style.color = n <= val ? '#F0C040' : '#1E3050';
+  }
+}
+function tShowTab(si, tab) {
+  var tabs = ['res','vel','com','def'];
+  for (var i = 0; i < tabs.length; i++) {
+    var p = document.getElementById('tpanel_' + tabs[i]);
+    var b = document.getElementById('ttab_' + tabs[i]);
+    if (p) p.style.display = tabs[i] === tab ? 'block' : 'none';
+    if (b) b.className = 'test-tab' + (tabs[i] === tab ? ' on' : '');
+  }
+}
+function tSave(si) {
+  if (!evals[si]) evals[si] = {};
+  var s = students[si];
+  var ag = tGetAG(s.age);
+  var fecha = new Date().toISOString().split('T')[0];
+  var keys = Object.keys(TNAMES);
+  for (var k = 0; k < keys.length; k++) {
+    var key = keys[k];
+    var inp = document.getElementById('tinp_' + key);
+    if (inp && inp.value !== '') {
+      var val = parseInt(inp.value) || 0;
+      var stars = tGetStars(key, val, ag);
+      if (!evals[si]['th_' + key]) evals[si]['th_' + key] = [];
+      evals[si]['th_' + key].push({f: fecha, v: val, s: stars});
+      evals[si]['tl_' + key] = {f: fecha, v: val, s: stars};
+    }
+  }
+  var qualKeys = ['hosinmano','hosinbong'];
+  for (var q = 0; q < qualKeys.length; q++) {
+    var qkey = qualKeys[q];
+    var qval = evals[si]['tq_' + qkey] || 0;
+    if (qval > 0) {
+      if (!evals[si]['th_' + qkey]) evals[si]['th_' + qkey] = [];
+      evals[si]['th_' + qkey].push({f: fecha, v: qval, s: qval});
+      evals[si]['tl_' + qkey] = {f: fecha, v: qval, s: qval};
+    }
+  }
+  saveEvals();
+  toast('Pruebas guardadas');
+  tRender(si);
+}
+function tNumCard(si, key, saved) {
+  var last = saved['tl_' + key];
+  var hist = saved['th_' + key] || [];
+  var stars = last ? last.s : 0;
+  var inp = '<input class="test-input" type="number" id="tinp_' + key + '" placeholder="0" min="0"' + (last ? ' value="' + last.v + '"' : '') + '>';
+  var histHtml = '';
+  if (hist.length > 1) {
+    var recent = hist.slice(-3).reverse();
+    for (var i = 0; i < recent.length; i++) {
+      histHtml += '<div class="test-hist-row">' +
+        '<span class="test-hist-date">' + recent[i].f + '</span>' +
+        '<span class="test-hist-val">' + recent[i].v + ' reps &nbsp;' + tStarHtml(recent[i].s) + '</span></div>';
+    }
+  }
+  return '<div class="test-card">' +
+    '<div class="test-name">' + TNAMES[key] + '</div>' +
+    '<div class="test-row"><span class="test-label">Repeticiones:</span>' + inp +
+    '<div>' + tStarHtml(stars) + '</div></div>' +
+    (last ? '<div class="test-ref">Ultima: ' + last.v + ' &middot; ' + last.f + '</div>' : '') +
+    (histHtml ? '<div style="margin-top:6px">' + histHtml + '</div>' : '') +
+  '</div>';
+}
+function tQualCard(si, key, saved, s) {
+  var labels = {hosinmano: 'Ho Sin Sul - Mano Vacia', hosinbong: 'Ho Sin Sul - Bong (baston)'};
+  var danRanks = ['Cho Dan','E Dan','Sam Dan','Sah Dan'];
+  var hasDan = false;
+  for (var d = 0; d < danRanks.length; d++) {
+    if (s.gup.indexOf(danRanks[d]) !== -1) { hasDan = true; break; }
+  }
+  if (key === 'hosinbong' && !hasDan) {
+    return '<div class="test-card"><div class="test-name">' + labels[key] + '</div>' +
+      '<div style="color:#555;font-size:12px">No aplica para este rango aun</div></div>';
+  }
+  var cur = saved['tq_' + key] || 0;
+  var last = saved['tl_' + key];
+  var starsHtml = '';
+  for (var n = 1; n <= 5; n++) {
+    starsHtml += '<span id="tqs_' + key + '_' + n + '" ' +
+      'style="font-size:24px;cursor:pointer;color:' + (n <= cur ? '#F0C040' : '#1E3050') + '" ' +
+      'onclick="tRateQual(' + si + ',&quot;' + key + '&quot;,' + n + ')">&#9733;</span>';
+  }
+  return '<div class="test-card">' +
+    '<div class="test-name">' + labels[key] + '</div>' +
+    '<div class="test-row"><span class="test-label">Calificacion:</span>' + starsHtml + '</div>' +
+    '<div class="test-ref">1&#9733; Inicio &middot; 2&#9733; Basico &middot; 3&#9733; Intermedio &middot; 4&#9733; Avanzado &middot; 5&#9733; Experto</div>' +
+    (last ? '<div class="test-ref">Ultima: ' + last.f + '</div>' : '') +
+  '</div>';
+}
+function tRender(si) {
+  var el = document.getElementById('test-section-container');
+  if (!el) return;
+  var s = students[si];
+  var saved = evals[si] || {};
+  var ag = tGetAG(s.age);
+  var agLabels = ['Infantil 7-12','Juvenil 13-17','Adulto 18-45','Adulto Mayor 46+'];
+  if (s.gup === 'Tiny Tiger') {
+    el.innerHTML = '<div class="test-section"><div class="sec-title">&#127939; PRUEBAS FISICAS</div>' +
+      '<p style="color:#888;font-size:13px;text-align:center;padding:14px">No aplican pruebas formales para Tiny Tiger.</p></div>';
+    return;
+  }
+  var resCards = '', velCards = '', comCards = '', defCards = '';
+  for (var i = 0; i < TGRP.res.length; i++) resCards += tNumCard(si, TGRP.res[i], saved);
+  for (var i = 0; i < TGRP.vel.length; i++) velCards += tNumCard(si, TGRP.vel[i], saved);
+  for (var i = 0; i < TGRP.com.length; i++) comCards += tNumCard(si, TGRP.com[i], saved);
+  defCards += tQualCard(si, 'hosinmano', saved, s);
+  defCards += tQualCard(si, 'hosinbong', saved, s);
+  el.innerHTML =
+    '<div class="test-section">' +
+      '<div class="sec-title">&#127939; PRUEBAS FISICAS - ' + (ag >= 0 ? agLabels[ag] : 'Tiny Tiger').toUpperCase() + '</div>' +
+      '<div class="test-tabs">' +
+        '<button class="test-tab on" id="ttab_res" onclick="tShowTab(' + si + ',&quot;res&quot;)">&#128170; Resistencia</button>' +
+        '<button class="test-tab" id="ttab_vel" onclick="tShowTab(' + si + ',&quot;vel&quot;)">&#9889; Velocidad</button>' +
+        '<button class="test-tab" id="ttab_com" onclick="tShowTab(' + si + ',&quot;com&quot;)">&#129354; Combinaciones</button>' +
+        '<button class="test-tab" id="ttab_def" onclick="tShowTab(' + si + ',&quot;def&quot;)">&#128737; Defensa</button>' +
+      '</div>' +
+      '<div id="tpanel_res">' + resCards + '</div>' +
+      '<div id="tpanel_vel" style="display:none">' + velCards + '</div>' +
+      '<div id="tpanel_com" style="display:none">' + comCards + '</div>' +
+      '<div id="tpanel_def" style="display:none">' + defCards + '</div>' +
+      '<button class="test-save-btn" onclick="tSave(' + si + ')">&#128190; Guardar Pruebas Fisicas</button>' +
+    '</div>';
+}
+
+// ===== ASISTENCIA MANUAL (ADMIN) =====
+function asistManual(si) {
+  var s = students[si];
+  var fecha = new Date().toISOString().split('T')[0];
+  var hora = new Date().toLocaleTimeString('es-CR', {hour:'2-digit', minute:'2-digit'});
+  asistencias.push({
+    id: Date.now(),
+    estudianteId: si,
+    nombre: s.fullName,
+    gup: s.gup,
+    fecha: fecha,
+    hora: hora,
+    estado: 'confirmada',
+    manual: true
+  });
+  saveAsistencias();
+  toast('Asistencia registrada manualmente');
+  renderAsistenciaAdmin();
+}
+
 load();
 
 // Build PIN pads
