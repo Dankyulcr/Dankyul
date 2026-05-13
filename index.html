@@ -641,7 +641,7 @@ function goDetail(i) {
   document.getElementById('view-estudiantes').classList.add('on');
   document.getElementById('btn-estudiantes').classList.add('on');
   renderEstudiantes();
-  setTimeout(function(){ document.getElementById('detail-container').scrollIntoView({behavior:'smooth'}); }, 100);
+  setTimeout(function(){ document.getElementById('detail-container').scrollIntoView({behavior:'smooth'}); tRender(i); }, 100);
 }
 
 // ── RENDER DETAIL ─────────────────────────────────────────────────────────────
@@ -1175,20 +1175,27 @@ function tRender(si) {
 // ===== ASISTENCIA MANUAL (ADMIN) =====
 function asistManual(si) {
   var s = students[si];
-  var fecha = new Date().toISOString().split('T')[0];
+  var fechaDefault = new Date().toISOString().split('T')[0];
+  var fechaInput = prompt('Fecha de la clase (YYYY-MM-DD):', fechaDefault);
+  if (!fechaInput) return;
+  // Validate format
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaInput)) {
+    toast('Formato incorrecto. Usa YYYY-MM-DD');
+    return;
+  }
   var hora = new Date().toLocaleTimeString('es-CR', {hour:'2-digit', minute:'2-digit'});
   asistencias.push({
     id: Date.now(),
     estudianteId: si,
     nombre: s.fullName,
     gup: s.gup,
-    fecha: fecha,
+    fecha: fechaInput,
     hora: hora,
     estado: 'confirmada',
     manual: true
   });
   saveAsistencias();
-  toast('Asistencia registrada manualmente');
+  toast('Asistencia registrada: ' + fechaInput);
   renderAsistenciaAdmin();
 }
 
