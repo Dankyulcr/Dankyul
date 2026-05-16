@@ -652,7 +652,7 @@ function goDetail(i) {
   document.getElementById('view-estudiantes').classList.add('on');
   document.getElementById('btn-estudiantes').classList.add('on');
   renderEstudiantes();
-  setTimeout(function(){ document.getElementById('detail-container').scrollIntoView({behavior:'smooth'}); tRender(i); renderRecursos(); }, 100);
+  setTimeout(function(){ document.getElementById('detail-container').scrollIntoView({behavior:'smooth'}); tRender(i); renderRecursos(i); }, 100);
 }
 
 // ── RENDER DETAIL ─────────────────────────────────────────────────────────────
@@ -741,7 +741,7 @@ function renderDetail(i) {
       '<button class="asist-manual-btn" onclick="asistManual('+i+')">✋ Registrar asistencia manual de hoy</button>' : '');
   // Render dynamic sections after innerHTML is set
   tRender(i);
-  renderRecursos();
+  renderRecursos(i);
 }
 
 function toggleStep(si,stepI) {
@@ -1219,6 +1219,69 @@ function asistManual(si) {
 
 
 // ===== RECURSOS =====
+// Videos por nivel de rango
+var VIDEOS_POR_NIVEL = {
+  basico: {
+    icon: '🎥',
+    title: 'Il Soo Sik Dae Ryun 1-10',
+    desc: 'Tecnicas de mano, pie y defensa 1 al 10 (WTSDA oficial)',
+    url: 'https://www.youtube.com/watch?v=H7kvaoagMcA'
+  },
+  intermedio: {
+    icon: '🎥',
+    title: 'Il Soo Sik Dae Ryun 11-20',
+    desc: 'Tecnicas de mano, pie y defensa 11 al 20 (WTSDA oficial)',
+    url: 'https://www.youtube.com/watch?v=H7kvaoagMcA'
+  },
+  avanzado: {
+    icon: '🎥',
+    title: 'Il Soo Sik Dae Ryun 21-30',
+    desc: 'Tecnicas de mano, pie y defensa 21 al 30 (WTSDA oficial)',
+    url: 'https://www.youtube.com/watch?v=DyK3sBIem-A'
+  },
+  completo: {
+    icon: '🎥',
+    title: 'Il Soo Sik Dae Ryun completo 1-30',
+    desc: 'Video completo oficial WTSDA — todas las tecnicas',
+    url: 'https://youtu.be/l-vXqL-0oUo'
+  }
+};
+
+// Assign video levels by gup
+function getVideosPorRango(gup) {
+  var videos = [];
+  // Tiny Tiger - no videos
+  if (gup === 'Tiny Tiger') return [];
+  // White belt (10mo, 9no Gup) - basic only
+  if (gup.indexOf('10mo') !== -1 || gup.indexOf('9no') !== -1) {
+    videos.push(VIDEOS_POR_NIVEL.basico);
+  }
+  // Orange/Green (8vo, 7mo, 6to, 5to Gup) - basic
+  else if (gup.indexOf('8vo') !== -1 || gup.indexOf('7mo') !== -1 ||
+           gup.indexOf('6to') !== -1 || gup.indexOf('5to') !== -1) {
+    videos.push(VIDEOS_POR_NIVEL.basico);
+  }
+  // Brown (4to, 3er Gup) - basic + intermediate
+  else if (gup.indexOf('4to') !== -1 || gup.indexOf('3er') !== -1) {
+    videos.push(VIDEOS_POR_NIVEL.basico);
+    videos.push(VIDEOS_POR_NIVEL.intermedio);
+  }
+  // Red (2do, 1er Gup) - basic + intermediate
+  else if (gup.indexOf('2do') !== -1 || gup.indexOf('1er') !== -1) {
+    videos.push(VIDEOS_POR_NIVEL.basico);
+    videos.push(VIDEOS_POR_NIVEL.intermedio);
+  }
+  // Black belts - all videos
+  else if (gup.indexOf('Cho Dan') !== -1 || gup.indexOf('E Dan') !== -1 ||
+           gup.indexOf('Sam Dan') !== -1 || gup.indexOf('Sah Dan') !== -1) {
+    videos.push(VIDEOS_POR_NIVEL.basico);
+    videos.push(VIDEOS_POR_NIVEL.intermedio);
+    videos.push(VIDEOS_POR_NIVEL.avanzado);
+    videos.push(VIDEOS_POR_NIVEL.completo);
+  }
+  return videos;
+}
+
 var RECURSOS = [
   {
     icon: '🌐',
@@ -1247,7 +1310,7 @@ var RECURSOS = [
   {
     icon: '📺',
     title: 'YouTube - Estudio Dan Kyul',
-    desc: 'Videos de tecnicas y formas',
+    desc: 'Videos y fotos del dojang',
     url: 'https://www.youtube.com/@estudiodankyulcostarica7198'
   },
   {
@@ -1264,10 +1327,34 @@ var RECURSOS = [
   }
 ];
 
-function renderRecursos() {
+function renderRecursos(si) {
   var el = document.getElementById('recursos-container');
   if (!el) return;
+  var s = si !== undefined ? students[si] : null;
   var html = '';
+
+  // Show rank-specific videos first if student is known
+  if (s && s.gup !== 'Tiny Tiger') {
+    var videos = getVideosPorRango(s.gup);
+    if (videos.length > 0) {
+      html += '<div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase">&#127916; Videos de tu rango — ' + s.gup + '</div>';
+      for (var v = 0; v < videos.length; v++) {
+        var vid = videos[v];
+        html += '<a class="recurso-link" href="' + vid.url + '" target="_blank">' +
+          '<div class="recurso-icon">' + vid.icon + '</div>' +
+          '<div class="recurso-info">' +
+            '<div class="recurso-title">' + vid.title + '</div>' +
+            '<div class="recurso-desc">' + vid.desc + '</div>' +
+          '</div>' +
+          '<div class="recurso-arrow">&#8250;</div>' +
+        '</a>';
+      }
+      html += '<div style="height:8px"></div>';
+      html += '<div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase">&#128279; Otros recursos</div>';
+    }
+  }
+
+  // General resources
   for (var i = 0; i < RECURSOS.length; i++) {
     var r = RECURSOS[i];
     html += '<a class="recurso-link" href="' + r.url + '" target="_blank">' +
@@ -1279,6 +1366,7 @@ function renderRecursos() {
       '<div class="recurso-arrow">&#8250;</div>' +
     '</a>';
   }
+
   el.innerHTML = '<div class="recursos-section">' +
     '<div class="sec-title">&#128279; RECURSOS Y ENLACES</div>' +
     html +
