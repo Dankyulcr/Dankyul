@@ -1449,29 +1449,32 @@ function renderRecursos(si) {
   var s = si !== undefined ? students[si] : null;
   var html = '';
 
-  // Show rank-specific videos first if student is known
+  // Show WTSDA official videos with note (2 links only)
   if (s && s.gup !== 'Tiny Tiger') {
-    var videos = getVideosPorRango(s.gup);
-    if (videos.length > 0) {
-      html += '<div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase">&#127916; Videos de tu rango — ' + s.gup + '</div>';
-      html += '<div style="background:rgba(200,16,46,0.08);border:1px solid rgba(200,16,46,0.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#aaa;line-height:1.5">' +
-        '&#9888;&#65039; <strong style="color:#E8E8E8">Nota sobre las formas (Hyung):</strong> El video del DVD WTSDA contiene todas las formas en secuencia. ' +
-        'Por favor <strong style="color:#fff">ver solo la forma de tu rango actual</strong> — no avanzar a formas de rangos superiores sin indicacion del instructor.' +
-      '</div>';
-      for (var v = 0; v < videos.length; v++) {
-        var vid = videos[v];
-        html += '<a class="recurso-link" href="' + vid.url + '" target="_blank">' +
-          '<div class="recurso-icon">' + vid.icon + '</div>' +
-          '<div class="recurso-info">' +
-            '<div class="recurso-title">' + vid.title + '</div>' +
-            '<div class="recurso-desc">' + vid.desc + '</div>' +
-          '</div>' +
-          '<div class="recurso-arrow">&#8250;</div>' +
-        '</a>';
-      }
-      html += '<div style="height:8px"></div>';
-      html += '<div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase">&#128279; Otros recursos</div>';
-    }
+    html += '<div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase">&#127916; Videos oficiales WTSDA</div>';
+    html += '<div style="background:rgba(200,16,46,0.08);border:1px solid rgba(200,16,46,0.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#aaa;line-height:1.6">' +
+      '&#9888;&#65039; Estos videos contienen <strong style="color:#fff">todo el contenido de la WTSDA</strong>. ' +
+      'Por favor ver <strong style="color:#fff">solo las formas y tecnicas de tu rango actual</strong>. ' +
+      'Tu instructor te indicara cuales te corresponden.' +
+    '</div>';
+    html += '<a class="recurso-link" href="https://www.youtube.com/watch?v=pzNAQ1TJN_k" target="_blank">' +
+      '<div class="recurso-icon">&#128203;</div>' +
+      '<div class="recurso-info">' +
+        '<div class="recurso-title">DVD Hyung WTSDA — Todas las formas</div>' +
+        '<div class="recurso-desc">Sae Kye, Pyung Ahn, Bassai, Naihanchi y mas — ver solo las de tu rango</div>' +
+      '</div>' +
+      '<div class="recurso-arrow">&#8250;</div>' +
+    '</a>';
+    html += '<a class="recurso-link" href="https://youtu.be/l-vXqL-0oUo" target="_blank">' +
+      '<div class="recurso-icon">&#129354;</div>' +
+      '<div class="recurso-info">' +
+        '<div class="recurso-title">DVD Il Soo Sik Dae Ryun — Tecnicas 1-30</div>' +
+        '<div class="recurso-desc">Soo Ki, Jok Ki y Ho Sin Sul completo — ver solo las tecnicas de tu rango</div>' +
+      '</div>' +
+      '<div class="recurso-arrow">&#8250;</div>' +
+    '</a>';
+    html += '<div style="height:8px"></div>';
+    html += '<div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase">&#128279; Otros recursos</div>';
   }
 
   // General resources
