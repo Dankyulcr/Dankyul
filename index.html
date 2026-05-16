@@ -1221,63 +1221,179 @@ function asistManual(si) {
 // ===== RECURSOS =====
 // Videos por nivel de rango
 var VIDEOS_POR_NIVEL = {
-  basico: {
-    icon: '🎥',
+  // Il Soo Sik - Sparring techniques
+  sparring_basico: {
+    icon: '🥊',
     title: 'Il Soo Sik Dae Ryun 1-10',
-    desc: 'Tecnicas de mano, pie y defensa 1 al 10 (WTSDA oficial)',
+    desc: 'Tecnicas de mano, pie y defensa 1 al 10 (WTSDA)',
     url: 'https://www.youtube.com/watch?v=H7kvaoagMcA'
   },
-  intermedio: {
-    icon: '🎥',
+  sparring_inter: {
+    icon: '🥊',
     title: 'Il Soo Sik Dae Ryun 11-20',
-    desc: 'Tecnicas de mano, pie y defensa 11 al 20 (WTSDA oficial)',
+    desc: 'Tecnicas de mano, pie y defensa 11 al 20 (WTSDA)',
     url: 'https://www.youtube.com/watch?v=H7kvaoagMcA'
   },
-  avanzado: {
-    icon: '🎥',
+  sparring_avanz: {
+    icon: '🥊',
     title: 'Il Soo Sik Dae Ryun 21-30',
-    desc: 'Tecnicas de mano, pie y defensa 21 al 30 (WTSDA oficial)',
+    desc: 'Tecnicas de mano, pie y defensa 21 al 30 (WTSDA)',
     url: 'https://www.youtube.com/watch?v=DyK3sBIem-A'
   },
-  completo: {
-    icon: '🎥',
+  sparring_completo: {
+    icon: '🥊',
     title: 'Il Soo Sik Dae Ryun completo 1-30',
-    desc: 'Video completo oficial WTSDA — todas las tecnicas',
+    desc: 'Video completo oficial WTSDA - todas las tecnicas',
     url: 'https://youtu.be/l-vXqL-0oUo'
+  },
+  // Hyung - Forms
+  sae_kye_il: {
+    icon: '📋',
+    title: 'Sae Kye Hyung Il Bu (Forma 1)',
+    desc: 'Primera forma WTSDA - cinturon blanco',
+    url: 'https://www.youtube.com/watch?v=Qtv32SHU6rA'
+  },
+  sae_kye_e: {
+    icon: '📋',
+    title: 'Sae Kye Hyung E Bu (Forma 2)',
+    desc: 'Segunda forma WTSDA',
+    url: 'https://www.youtube.com/watch?v=EIG3hW9prhY'
+  },
+  sae_kye_sam: {
+    icon: '📋',
+    title: 'Sae Kye Hyung Sam Bu (Forma 3)',
+    desc: 'Tercera forma WTSDA',
+    url: 'https://www.youtube.com/watch?v=pzNAQ1TJN_k'
+  },
+  pyung_cho: {
+    icon: '📋',
+    title: 'Pyung Ahn Cho Dan',
+    desc: 'Primera forma Pyung Ahn - cinturon naranja',
+    url: 'https://www.youtube.com/watch?v=6heraSg5P0g'
+  },
+  pyung_e: {
+    icon: '📋',
+    title: 'Pyung Ahn E Dan',
+    desc: 'Segunda forma Pyung Ahn',
+    url: 'https://www.youtube.com/watch?v=tutfDd5JmiI'
+  },
+  pyung_sam: {
+    icon: '📋',
+    title: 'Pyung Ahn Sam Dan',
+    desc: 'Tercera forma Pyung Ahn',
+    url: 'https://www.youtube.com/watch?v=i82wIxUeUP4'
+  },
+  pyung_sah: {
+    icon: '📋',
+    title: 'Pyung Ahn Sah Dan',
+    desc: 'Cuarta forma Pyung Ahn',
+    url: 'https://www.youtube.com/watch?v=wu4oDlxMLe4'
+  },
+  pyung_oh: {
+    icon: '📋',
+    title: 'Pyung Ahn Oh Dan',
+    desc: 'Quinta forma Pyung Ahn',
+    url: 'https://www.youtube.com/watch?v=KpNJSqYeYgs'
+  },
+  bassai: {
+    icon: '📋',
+    title: 'Bassai Hyung',
+    desc: 'Forma avanzada - primer Gup y Dan',
+    url: 'https://www.youtube.com/watch?v=pzNAQ1TJN_k'
+  },
+  hyung_completo: {
+    icon: '🎬',
+    title: 'DVD Hyung WTSDA - Todas las formas',
+    desc: 'Video oficial WTSDA con todas las formas Gup y Dan',
+    url: 'https://www.youtube.com/watch?v=pzNAQ1TJN_k'
   }
 };
 
-// Assign video levels by gup
+// Assign videos by gup — sparring + hyung
 function getVideosPorRango(gup) {
+  var v = VIDEOS_POR_NIVEL;
   var videos = [];
-  // Tiny Tiger - no videos
   if (gup === 'Tiny Tiger') return [];
-  // White belt (10mo, 9no Gup) - basic only
-  if (gup.indexOf('10mo') !== -1 || gup.indexOf('9no') !== -1) {
-    videos.push(VIDEOS_POR_NIVEL.basico);
+
+  // 10mo Gup - Blanco
+  if (gup.indexOf('10mo') !== -1) {
+    videos.push(v.sae_kye_il);
+    videos.push(v.sparring_basico);
   }
-  // Orange/Green (8vo, 7mo, 6to, 5to Gup) - basic
-  else if (gup.indexOf('8vo') !== -1 || gup.indexOf('7mo') !== -1 ||
-           gup.indexOf('6to') !== -1 || gup.indexOf('5to') !== -1) {
-    videos.push(VIDEOS_POR_NIVEL.basico);
+  // 9no Gup - Blanco con raya naranja
+  else if (gup.indexOf('9no') !== -1) {
+    videos.push(v.sae_kye_il);
+    videos.push(v.sae_kye_e);
+    videos.push(v.sparring_basico);
   }
-  // Brown (4to, 3er Gup) - basic + intermediate
-  else if (gup.indexOf('4to') !== -1 || gup.indexOf('3er') !== -1) {
-    videos.push(VIDEOS_POR_NIVEL.basico);
-    videos.push(VIDEOS_POR_NIVEL.intermedio);
+  // 8vo Gup - Naranja
+  else if (gup.indexOf('8vo') !== -1) {
+    videos.push(v.sae_kye_il);
+    videos.push(v.sae_kye_e);
+    videos.push(v.sae_kye_sam);
+    videos.push(v.sparring_basico);
   }
-  // Red (2do, 1er Gup) - basic + intermediate
-  else if (gup.indexOf('2do') !== -1 || gup.indexOf('1er') !== -1) {
-    videos.push(VIDEOS_POR_NIVEL.basico);
-    videos.push(VIDEOS_POR_NIVEL.intermedio);
+  // 7mo Gup - Naranja (hacia Pyung Ahn Cho Dan)
+  else if (gup.indexOf('7mo') !== -1) {
+    videos.push(v.sae_kye_il);
+    videos.push(v.sae_kye_e);
+    videos.push(v.sae_kye_sam);
+    videos.push(v.pyung_cho);
+    videos.push(v.sparring_basico);
   }
-  // Black belts - all videos
+  // 6to Gup - Verde
+  else if (gup.indexOf('6to') !== -1) {
+    videos.push(v.pyung_cho);
+    videos.push(v.pyung_e);
+    videos.push(v.sparring_basico);
+  }
+  // 5to Gup - Verde (hacia Pyung Ahn Sam Dan)
+  else if (gup.indexOf('5to') !== -1) {
+    videos.push(v.pyung_cho);
+    videos.push(v.pyung_e);
+    videos.push(v.pyung_sam);
+    videos.push(v.sparring_basico);
+  }
+  // 4to Gup - Marron
+  else if (gup.indexOf('4to') !== -1) {
+    videos.push(v.pyung_cho);
+    videos.push(v.pyung_e);
+    videos.push(v.pyung_sam);
+    videos.push(v.pyung_sah);
+    videos.push(v.sparring_basico);
+    videos.push(v.sparring_inter);
+  }
+  // 3er Gup - Marron (hacia Pyung Ahn Oh Dan)
+  else if (gup.indexOf('3er') !== -1) {
+    videos.push(v.pyung_sam);
+    videos.push(v.pyung_sah);
+    videos.push(v.pyung_oh);
+    videos.push(v.sparring_basico);
+    videos.push(v.sparring_inter);
+  }
+  // 2do Gup - Rojo
+  else if (gup.indexOf('2do') !== -1) {
+    videos.push(v.pyung_oh);
+    videos.push(v.bassai);
+    videos.push(v.sparring_basico);
+    videos.push(v.sparring_inter);
+  }
+  // 1er Gup - Rojo (hacia Cho Dan)
+  else if (gup.indexOf('1er') !== -1) {
+    videos.push(v.pyung_oh);
+    videos.push(v.bassai);
+    videos.push(v.sparring_basico);
+    videos.push(v.sparring_inter);
+  }
+  // Dan - Cinturones negros
   else if (gup.indexOf('Cho Dan') !== -1 || gup.indexOf('E Dan') !== -1 ||
            gup.indexOf('Sam Dan') !== -1 || gup.indexOf('Sah Dan') !== -1) {
-    videos.push(VIDEOS_POR_NIVEL.basico);
-    videos.push(VIDEOS_POR_NIVEL.intermedio);
-    videos.push(VIDEOS_POR_NIVEL.avanzado);
-    videos.push(VIDEOS_POR_NIVEL.completo);
+    videos.push(v.bassai);
+    videos.push(v.hyung_completo);
+    videos.push(v.sparring_basico);
+    videos.push(v.sparring_inter);
+    videos.push(v.sparring_avanz);
+    videos.push(v.sparring_completo);
   }
   return videos;
 }
@@ -1338,6 +1454,10 @@ function renderRecursos(si) {
     var videos = getVideosPorRango(s.gup);
     if (videos.length > 0) {
       html += '<div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase">&#127916; Videos de tu rango — ' + s.gup + '</div>';
+      html += '<div style="background:rgba(200,16,46,0.08);border:1px solid rgba(200,16,46,0.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#aaa;line-height:1.5">' +
+        '&#9888;&#65039; <strong style="color:#E8E8E8">Nota sobre las formas (Hyung):</strong> El video del DVD WTSDA contiene todas las formas en secuencia. ' +
+        'Por favor <strong style="color:#fff">ver solo la forma de tu rango actual</strong> — no avanzar a formas de rangos superiores sin indicacion del instructor.' +
+      '</div>';
       for (var v = 0; v < videos.length; v++) {
         var vid = videos[v];
         html += '<a class="recurso-link" href="' + vid.url + '" target="_blank">' +
