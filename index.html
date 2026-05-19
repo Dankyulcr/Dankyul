@@ -291,6 +291,7 @@ body.admin-mode .admin-only{display:block}
   <button class="bnav-btn on" id="btn-inicio" onclick="goView('inicio')"><span>🏠</span>Inicio</button>
   <button class="bnav-btn" id="btn-estudiantes" onclick="goView('estudiantes')"><span>🥋</span>Estudiantes</button>
   <button class="bnav-btn admin-only" id="btn-pagos" onclick="goView('pagos')"><span>💰</span>Pagos</button>
+  <button class="bnav-btn" id="btn-insignias" onclick="goView('insignias')" style="display:none"><span>🏅</span>Insignias</button>
   <button class="bnav-btn" id="btn-eventos" onclick="goView('eventos')"><span>📅</span>Eventos</button>
   <button class="bnav-btn admin-only" id="btn-asistencia" onclick="goView('asistencia')"><span>✅</span>Asistencia</button>
   <button class="bnav-btn admin-only" id="btn-resultados" onclick="goView('resultados')"><span>📊</span>Resultados</button>
@@ -318,10 +319,25 @@ body.admin-mode .admin-only{display:block}
   <div id="pagos-list"></div>
 </div>
 
+<!-- VIEW: INSIGNIAS -->
+<div class="view" id="view-insignias">
+  <div id="insignias-view-container"></div>
+</div>
+
 <!-- VIEW: EVENTOS -->
 <div class="view" id="view-eventos">
-  <button class="cal-add-btn admin-only" id="btn-add-evento" onclick="abrirModal('modal-evento')">+ Agregar Evento</button>
-  <div id="eventos-list"></div>
+  <div class="pills" id="cal-tabs-container" style="margin-bottom:4px">
+    <div class="pill on" id="cal-tab-eventos" onclick="calShowTab('eventos')">📅 Eventos</div>
+    <div class="pill" id="cal-tab-clases" onclick="calShowTab('clases')">🥋 Clases</div>
+  </div>
+  <div id="cal-panel-eventos">
+    <button class="cal-add-btn admin-only" id="btn-add-evento" onclick="abrirModal('modal-evento')">+ Agregar Evento</button>
+    <div id="eventos-list"></div>
+  </div>
+  <div id="cal-panel-clases" style="display:none">
+    <button class="cal-add-btn admin-only" id="btn-add-clase" onclick="abrirModal('modal-clase')">+ Registrar Clase</button>
+    <div id="clases-list"></div>
+  </div>
 </div>
 
 <!-- VIEW: RESULTADOS (admin) -->
@@ -415,6 +431,32 @@ body.admin-mode .admin-only{display:block}
     <div class="modal-btns">
       <button class="btn-cancel" onclick="cerrarModal('modal-evento')">Cancelar</button>
       <button class="save-btn" style="margin:0" onclick="guardarEvento()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal-clase">
+  <div class="modal-box">
+    <div class="modal-title">Registrar Clase</div>
+    <label class="form-lbl">FECHA</label><input type="date" id="cl-fecha">
+    <label class="form-lbl">TEMA PRINCIPAL</label><input type="text" id="cl-tema" placeholder="Pyung Ahn Cho Dan, Sparring...">
+    <label class="form-lbl">TÉCNICAS PRACTICADAS</label><input type="text" id="cl-tecnicas" placeholder="Patada lateral, Jung Kwon...">
+    <label class="form-lbl">ESTUDIANTES PRESENTES</label><input type="number" id="cl-presentes" placeholder="0" min="0">
+    <label class="form-lbl">NOTAS</label><input type="text" id="cl-notas" placeholder="Observaciones generales...">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="cerrarModal('modal-clase')">Cancelar</button>
+      <button class="save-btn" style="margin:0" onclick="guardarClase()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal-historial">
+  <div class="modal-box" style="max-width:500px">
+    <div class="modal-title">📖 Historial Marcial</div>
+    <div id="historial-content" style="max-height:60vh;overflow-y:auto"></div>
+    <div class="modal-btns" style="margin-top:14px">
+      <button class="btn-cancel" onclick="cerrarModal('modal-historial')">Cerrar</button>
+      <button class="save-btn" style="margin:0;background:#1B3A6B" onclick="descargarHistorial()">⬇ Descargar</button>
     </div>
   </div>
 </div>
@@ -513,9 +555,10 @@ function goView(v) {
   if (v === 'inicio') renderCards();
   if (v === 'estudiantes') renderEstudiantes();
   if (v === 'pagos') renderPagos();
-  if (v === 'eventos') renderEventos();
+  if (v === 'eventos') { renderEventos(); renderClases(); }
   if (v === 'asistencia') renderAsistenciaAdmin();
   if (v === 'resultados') renderResultados();
+  if (v === 'insignias') renderInsigniasView();
 }
 
 // ── PIN PADS ──────────────────────────────────────────────────────────────────
@@ -607,6 +650,7 @@ function goViewStudent() {
   document.getElementById('view-estudiantes').classList.add('on');
   document.getElementById('btn-estudiantes').classList.add('on');
   document.getElementById('btn-eventos').style.display = '';
+  document.getElementById('btn-insignias').style.display = '';
   currentStudent = currentStudentId;
   document.getElementById('pills-container').innerHTML = '';
   renderDetail(currentStudentId);
@@ -647,6 +691,7 @@ function loginAdmin() {
   document.getElementById('loginAdminScreen').style.display = 'none';
   document.getElementById('studentBar').style.display = 'none';
   document.getElementById('modeBar').style.display = 'flex';
+  document.getElementById('btn-insignias').style.display = '';
   goView('inicio');
 }
 
@@ -799,7 +844,8 @@ function renderDetail(i) {
     '<div class="divider"></div>' +
     '<div class="sec-title">📊 EVALUACIÓN INDIVIDUAL</div>'+evalH+
     (adminMode ? '<button class="save-btn" onclick="saveEval('+i+')">&#128190; Guardar Evaluacion</button>' +
-      '<button class="asist-manual-btn" onclick="asistManual('+i+')">&#9995; Registrar asistencia manual de hoy</button>' : '') +
+      '<button class="asist-manual-btn" onclick="asistManual('+i+')">&#9995; Registrar asistencia manual de hoy</button>' +
+      '<button class="asist-manual-btn" style="background:#1D6F42;margin-top:6px" onclick="abrirHistorial('+i+')">📖 Ver Historial Marcial</button>' : '') +
     (!adminMode && currentStudentId === i ?
       '<div class="sync-box" style="margin-top:16px">' +
         '<div class="sync-title">&#128257; Compartir mis datos con el instructor</div>' +
@@ -1159,9 +1205,13 @@ function tSave(si) {
     if (inp && inp.value !== '') {
       var val = parseInt(inp.value) || 0;
       var stars = tGetStars(key, val, ag);
+      var notaEl = document.getElementById('tnota_' + key);
+      var nota = notaEl ? notaEl.value.trim() : '';
+      var entry = {f: fecha, v: val, s: stars};
+      if (nota) entry.nota = nota;
       if (!evals[si]['th_' + key]) evals[si]['th_' + key] = [];
-      evals[si]['th_' + key].push({f: fecha, v: val, s: stars});
-      evals[si]['tl_' + key] = {f: fecha, v: val, s: stars};
+      evals[si]['th_' + key].push(entry);
+      evals[si]['tl_' + key] = entry;
     }
   }
   // Save combo notes
@@ -1191,12 +1241,16 @@ function tNumCard(si, key, saved) {
   var hist = saved['th_' + key] || [];
   var stars = last ? last.s : 0;
   var inp = '<input class="test-input" type="number" id="tinp_' + key + '" placeholder="0" min="0"' + (last ? ' value="' + last.v + '"' : '') + '>';
+  var lastNote = last && last.nota ? last.nota : '';
+  var noteInp = '<input type="text" id="tnota_' + key + '" placeholder="Nota (opcional)..." ' +
+    'style="width:100%;background:#1E3050;border:1px solid #2a4070;border-radius:6px;padding:5px 8px;color:#aaa;font-size:11px;font-family:Arial;margin-top:4px" ' +
+    'value="' + lastNote.replace(/"/g,'&quot;') + '">';
   var histHtml = '';
   if (hist.length > 1) {
     var recent = hist.slice(-3).reverse();
     for (var i = 0; i < recent.length; i++) {
       histHtml += '<div class="test-hist-row">' +
-        '<span class="test-hist-date">' + recent[i].f + '</span>' +
+        '<span class="test-hist-date">' + recent[i].f + (recent[i].nota ? ' · <em style="color:#666">' + recent[i].nota + '</em>' : '') + '</span>' +
         '<span class="test-hist-val">' + recent[i].v + ' reps &nbsp;' + tStarHtml(recent[i].s) + '</span></div>';
     }
   }
@@ -1204,6 +1258,7 @@ function tNumCard(si, key, saved) {
     '<div class="test-name">' + TNAMES[key] + '</div>' +
     '<div class="test-row"><span class="test-label">Repeticiones:</span>' + inp +
     '<div>' + tStarHtml(stars) + '</div></div>' +
+    noteInp +
     (last ? '<div class="test-ref">Ultima: ' + last.v + ' &middot; ' + last.f + '</div>' : '') +
     (histHtml ? '<div style="margin-top:6px">' + histHtml + '</div>' : '') +
   '</div>';
@@ -2102,9 +2157,274 @@ function importarDatos() {
   }
 }
 
-load();
+// ===== INSIGNIAS VIEW (pestaña separada) =====
+function renderInsigniasView() {
+  var el = document.getElementById('insignias-view-container');
+  if (!el) return;
+  var si = (currentStudentId !== null && !adminMode) ? currentStudentId : (currentStudent !== null ? currentStudent : null);
+  if (si === null) {
+    var html = '<div class="sec-title">🏅 INSIGNIAS — TODOS LOS ESTUDIANTES</div>';
+    students.forEach(function(s, idx) {
+      var earned = calcBadgesAuto(idx);
+      var total = Object.keys(earned).length;
+      var bi = getBelt(s.gup);
+      var av = bi ? '<img src="'+bi+'" style="width:32px;height:18px;object-fit:contain">' : s.emoji;
+      html += '<div class="res-card">' +
+        '<div class="res-header" onclick="renderInsigniasDetalle('+idx+')" style="cursor:pointer">' +
+          '<div style="width:38px;height:38px;border-radius:50%;background:'+s.beltColor+'22;border:2px solid '+s.beltColor+';display:flex;align-items:center;justify-content:center;flex-shrink:0">'+av+'</div>' +
+          '<div><div class="res-name">'+s.name+'</div><div class="res-belt">'+total+' / '+BADGE_DEFS.length+' insignias</div></div>' +
+          '<div style="margin-left:auto;color:#F0C040;font-size:13px">'+starsStr(Math.round(total/BADGE_DEFS.length*5))+'</div>' +
+        '</div>' +
+        '<div id="insig-det-'+idx+'" class="res-body"></div>' +
+      '</div>';
+    });
+    el.innerHTML = html;
+  } else {
+    var s = students[si];
+    var racha = calcRacha(si);
+    var earned = calcBadgesAuto(si);
+    var totalEarned = Object.keys(earned).length;
+    var html = '<div class="racha-box">' +
+      '<div class="racha-icon">🔥</div>' +
+      '<div><div class="racha-num">' + racha.current + '</div>' +
+      '<div class="racha-label">SEMANAS CONSECUTIVAS</div>' +
+      '<div class="racha-best">Mejor racha: ' + racha.best + ' · Total clases: ' + racha.total + '</div></div></div>';
+    if (s.months >= s.monthsNeeded && s.monthsNeeded < 999) {
+      var nextR = s.targetGup.indexOf('→')!==-1 ? s.targetGup.split('→')[1].trim() : s.targetGup;
+      html += '<div class="exam-ready-box"><div class="exam-ready-icon">🏆</div><div>' +
+        '<div class="exam-ready-text">Listo para examen de rango</div>' +
+        '<div class="exam-ready-sub">Cumples el tiempo mínimo para ' + nextR + '</div></div></div>';
+    }
+    html += '<div style="font-size:12px;color:#888;margin:8px 0 12px">' + totalEarned + ' de ' + BADGE_DEFS.length + ' insignias obtenidas</div>';
+    BADGE_CATS.forEach(function(cat) {
+      var catBadges = BADGE_DEFS.filter(function(b){ return b.cat===cat.id; });
+      html += '<div class="badge-category">' + cat.label + '</div><div class="badges-grid">';
+      catBadges.forEach(function(b) {
+        var isEarned = !!earned[b.id];
+        var dateStr = (earned[b.id] && earned[b.id] !== '✓') ? earned[b.id] : '';
+        html += '<div class="badge-item ' + (isEarned?'earned':'locked') + '">' +
+          '<span class="badge-emoji">' + b.emoji + '</span>' +
+          '<div class="badge-name">' + b.name + '</div>' +
+          (isEarned ? '<div class="badge-date">' + (dateStr||'✓') + '</div>' : '<div class="badge-locked-label">🔒</div>') +
+          '</div>';
+      });
+      html += '</div>';
+    });
+    el.innerHTML = html;
+  }
+}
 
-// Build PIN pads
+function renderInsigniasDetalle(si) {
+  var det = document.getElementById('insig-det-'+si);
+  if (!det) return;
+  if (det.classList.contains('open')) { det.classList.remove('open'); return; }
+  var earned = calcBadgesAuto(si);
+  var html = '<div class="badges-grid" style="margin-top:8px">';
+  BADGE_DEFS.forEach(function(b) {
+    var isEarned = !!earned[b.id];
+    var dateStr = (earned[b.id] && earned[b.id] !== '✓') ? earned[b.id] : '';
+    var adminCtrl = isEarned ?
+      '<button onclick="revokeBadge('+si+',\''+b.id+'\')" style="background:none;border:none;color:#555;font-size:9px;cursor:pointer;margin-top:2px;display:block;width:100%">quitar</button>' :
+      '<button onclick="grantBadge('+si+',\''+b.id+'\')" style="background:rgba(200,16,46,0.15);border:1px solid #C8102E;color:#C8102E;font-size:9px;cursor:pointer;border-radius:4px;padding:2px 6px;margin-top:4px;display:block;width:100%">otorgar</button>';
+    html += '<div class="badge-item '+(isEarned?'earned':'locked')+'">' +
+      '<span class="badge-emoji">'+b.emoji+'</span>' +
+      '<div class="badge-name">'+b.name+'</div>' +
+      (isEarned ? '<div class="badge-date">'+(dateStr||'✓')+'</div>' : '<div class="badge-locked-label">🔒</div>') +
+      adminCtrl + '</div>';
+  });
+  html += '</div>';
+  det.innerHTML = html;
+  det.classList.add('open');
+}
+
+// ===== CLASES (sección separada en Calendario) =====
+var clases = [];
+function loadClases() {
+  try { clases = JSON.parse(localStorage.getItem('dk_clases') || '[]'); } catch(e){}
+}
+function saveClases() { localStorage.setItem('dk_clases', JSON.stringify(clases)); }
+
+function calShowTab(tab) {
+  var tabEvEl = document.getElementById('cal-tab-eventos');
+  var tabClEl = document.getElementById('cal-tab-clases');
+  var panEvEl = document.getElementById('cal-panel-eventos');
+  var panClEl = document.getElementById('cal-panel-clases');
+  if (tab === 'eventos') {
+    tabEvEl.classList.add('on'); tabClEl.classList.remove('on');
+    panEvEl.style.display = ''; panClEl.style.display = 'none';
+    renderEventos();
+  } else {
+    tabClEl.classList.add('on'); tabEvEl.classList.remove('on');
+    panClEl.style.display = ''; panEvEl.style.display = 'none';
+    if (adminMode) { var b=document.getElementById('btn-add-clase'); if(b) b.style.display='block'; }
+    renderClases();
+  }
+}
+
+function guardarClase() {
+  var fecha  = document.getElementById('cl-fecha').value;
+  var tema   = document.getElementById('cl-tema').value.trim();
+  var tec    = document.getElementById('cl-tecnicas').value.trim();
+  var pres   = parseInt(document.getElementById('cl-presentes').value)||0;
+  var notas  = document.getElementById('cl-notas').value.trim();
+  if (!fecha || !tema) { toast('Fecha y tema son obligatorios'); return; }
+  loadClases();
+  clases.push({id:Date.now(), fecha:fecha, tema:tema, tecnicas:tec, presentes:pres, notas:notas});
+  clases.sort(function(a,b){ return b.fecha.localeCompare(a.fecha); });
+  saveClases();
+  cerrarModal('modal-clase');
+  ['cl-fecha','cl-tema','cl-tecnicas','cl-presentes','cl-notas'].forEach(function(id){ var el=document.getElementById(id); if(el)el.value=''; });
+  toast('✓ Clase registrada');
+  renderClases();
+}
+
+function renderClases() {
+  loadClases();
+  var el = document.getElementById('clases-list');
+  if (!el) return;
+  if (adminMode) { var b=document.getElementById('btn-add-clase'); if(b) b.style.display='block'; }
+  if (!clases.length) {
+    el.innerHTML = '<div style="color:#555;font-size:13px;text-align:center;padding:24px">No hay clases registradas aún.</div>';
+    return;
+  }
+  var html = '';
+  clases.forEach(function(c) {
+    var d = new Date(c.fecha + 'T12:00:00');
+    var day = d.getDate();
+    var mon = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SET','OCT','NOV','DIC'][d.getMonth()];
+    html += '<div class="cal-event">' +
+      '<div class="cal-event-header">' +
+        '<div class="cal-date-box"><div class="cal-day">'+day+'</div><div class="cal-mon">'+mon+'</div></div>' +
+        '<div class="cal-info">' +
+          '<div class="cal-title">🥋 ' + c.tema + '</div>' +
+          '<div class="cal-desc">' + (c.tecnicas||'Sin técnicas anotadas') + '</div>' +
+          (c.presentes ? '<div style="font-size:11px;color:#888;margin-top:3px">👥 '+c.presentes+' presentes</div>' : '') +
+          (c.notas ? '<div style="font-size:11px;color:#666;margin-top:4px;font-style:italic">'+c.notas+'</div>' : '') +
+        '</div>' +
+        (adminMode ? '<button onclick="eliminarClase('+c.id+')" style="background:none;border:none;color:#555;font-size:20px;cursor:pointer;flex-shrink:0">🗑</button>' : '') +
+      '</div>' +
+    '</div>';
+  });
+  el.innerHTML = html;
+}
+
+function eliminarClase(id) {
+  loadClases();
+  clases = clases.filter(function(c){ return c.id !== id; });
+  saveClases();
+  renderClases();
+  toast('Clase eliminada');
+}
+
+// ===== HISTORIAL MARCIAL =====
+function abrirHistorial(si) {
+  var s = students[si];
+  var saved = evals[si] || {};
+  var asist = asistencias.filter(function(a){ return a.estudianteId===si && a.estado==='confirmada'; });
+  var earned = calcBadgesAuto(si);
+  var racha = calcRacha(si);
+  var html = '<div style="font-size:12px;color:#888;margin-bottom:14px">Generado el ' + new Date().toLocaleDateString('es-CR') + '</div>';
+  html += '<div style="background:#132035;border-radius:10px;padding:12px;margin-bottom:14px">' +
+    '<div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:4px">' + s.fullName + '</div>' +
+    '<div style="font-size:12px;color:#888">' + s.gup + ' · ' + s.age + ' años</div>' +
+    '<div style="font-size:12px;color:#F0C040;margin-top:4px">🔥 Racha: ' + racha.current + ' sem · Total clases: ' + racha.total + '</div></div>';
+
+  // Asistencias
+  html += '<div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:6px">ASISTENCIAS (' + asist.length + ')</div>';
+  if (asist.length) {
+    var sorted = asist.slice().sort(function(a,b){ return b.fecha.localeCompare(a.fecha); });
+    html += '<div style="max-height:110px;overflow-y:auto;background:#0D1B2A;border-radius:8px;padding:8px;margin-bottom:12px">';
+    sorted.forEach(function(a){ html += '<div style="font-size:11px;color:#888;padding:2px 0;border-bottom:1px solid #1a2d44">'+a.fecha+' · '+a.hora+(a.manual?' <em style=\"color:#555\">(manual)</em>':'')+'</div>'; });
+    html += '</div>';
+  } else {
+    html += '<div style="font-size:12px;color:#555;margin-bottom:12px">Sin asistencias confirmadas.</div>';
+  }
+
+  // Pruebas físicas
+  var tkeys = Object.keys(TNAMES_ALL);
+  var hasPruebas = tkeys.some(function(k){ return saved['tl_'+k]; });
+  if (hasPruebas) {
+    html += '<div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:6px">PRUEBAS FÍSICAS</div>';
+    html += '<div style="background:#0D1B2A;border-radius:8px;padding:8px;margin-bottom:12px">';
+    tkeys.forEach(function(key) {
+      var last = saved['tl_'+key]; if (!last) return;
+      var hist = saved['th_'+key] || [];
+      html += '<div style="padding:4px 0;border-bottom:1px solid #1a2d44">' +
+        '<div style="font-size:11px;font-weight:700;color:#fff">'+TNAMES_ALL[key]+'</div>' +
+        '<div style="font-size:11px;color:#2ECC71">'+last.v+(key!=='hosinmano'&&key!=='hosinbong'?' reps':'')+' · '+starsStr(last.s)+(last.nota?' · <em style="color:#888">'+last.nota+'</em>':'')+'</div>';
+      if (hist.length > 1) {
+        html += '<div style="font-size:10px;color:#555;margin-top:1px">Historial: ';
+        hist.slice(-5).forEach(function(h){ html += h.f+':'+h.v+(h.nota?' ('+h.nota+')'  :'')+' | '; });
+        html += '</div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  // Insignias
+  var earnedList = Object.keys(earned);
+  html += '<div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:6px">INSIGNIAS ('+earnedList.length+' / '+BADGE_DEFS.length+')</div>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px">';
+  BADGE_DEFS.forEach(function(b){ if(earned[b.id]) html += '<div style="background:rgba(240,192,64,0.1);border:1px solid rgba(240,192,64,0.3);border-radius:8px;padding:3px 7px;font-size:10px;color:#F0C040">'+b.emoji+' '+b.name+'</div>'; });
+  html += '</div>';
+
+  // Evaluación
+  var evalCats2 = [{key:'fis',label:'Físico',items:['Tecnica','Potencia','Velocidad','Resistencia','Flexibilidad']},{key:'men',label:'Mental',items:['Concentracion','Memoria motora','Respeto','Humildad','Perseverancia']},{key:'emo',label:'Emocional',items:['Motivacion','Confianza','Frustracion','Actitud','Disfrute']}];
+  var hasEv = evalCats2.some(function(cat){ return cat.items.some(function(it){ return saved['e_'+cat.key+'_'+it]; }); });
+  if (hasEv) {
+    html += '<div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:6px">EVALUACIÓN INSTRUCTOR</div>';
+    html += '<div style="background:#0D1B2A;border-radius:8px;padding:8px">';
+    evalCats2.forEach(function(cat) {
+      var tot=0, cnt=0;
+      cat.items.forEach(function(it){ var v=saved['e_'+cat.key+'_'+it]; if(v){tot+=v;cnt++;} });
+      if (cnt) html += '<div style="font-size:12px;color:#888;padding:3px 0">'+cat.label+': '+starsStr(Math.round(tot/cnt))+' ('+(tot/cnt).toFixed(1)+'/5)</div>';
+    });
+    html += '</div>';
+  }
+
+  document.getElementById('historial-content').innerHTML = html;
+  document.getElementById('historial-content').dataset.si = si;
+  abrirModal('modal-historial');
+}
+
+function descargarHistorial() {
+  var content = document.getElementById('historial-content');
+  var si = parseInt(content.dataset.si);
+  var s = students[si];
+  var saved = evals[si] || {};
+  var asist = asistencias.filter(function(a){ return a.estudianteId===si && a.estado==='confirmada'; });
+  var earned = calcBadgesAuto(si);
+  var racha = calcRacha(si);
+  var txt = '== HISTORIAL MARCIAL - DAN KYUL 803 ==\n';
+  txt += 'Generado: ' + new Date().toLocaleDateString('es-CR') + '\n\n';
+  txt += 'ESTUDIANTE: ' + s.fullName + '\n';
+  txt += 'RANGO: ' + s.gup + '\n';
+  txt += 'EDAD: ' + s.age + ' años\n';
+  txt += 'RACHA ACTUAL: ' + racha.current + ' semanas\n';
+  txt += 'TOTAL CLASES: ' + racha.total + '\n\n';
+  txt += '--- ASISTENCIAS ---\n';
+  asist.slice().sort(function(a,b){ return b.fecha.localeCompare(a.fecha); })
+    .forEach(function(a){ txt += a.fecha+' · '+a.hora+(a.manual?' (manual)':'')+'\n'; });
+  txt += '\n--- PRUEBAS FÍSICAS ---\n';
+  Object.keys(TNAMES_ALL).forEach(function(key) {
+    var last = saved['tl_'+key]; if (!last) return;
+    var hist = saved['th_'+key] || [];
+    txt += TNAMES_ALL[key]+': '+last.v+(key!=='hosinmano'&&key!=='hosinbong'?' reps':'')+' ('+last.s+'★)'+(last.nota?' — '+last.nota:'')+'\n';
+    if (hist.length > 1) { txt += '  Historial: '; hist.forEach(function(h){ txt += h.f+':'+h.v+(h.nota?' ('+h.nota+')'  :'')+' | '; }); txt += '\n'; }
+  });
+  txt += '\n--- INSIGNIAS ---\n';
+  BADGE_DEFS.forEach(function(b){ if(earned[b.id]) txt += b.name+'\n'; });
+  var blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'HistorialMarcial_'+s.name.replace(/ /g,'_')+'_'+new Date().toISOString().slice(0,10)+'.txt';
+  a.click();
+  toast('✓ Historial descargado');
+}
+
+load();
+loadClases();
 buildPad('pinPad', 'd', function(){ return pinEntry; }, intentarLoginEstudiante);
 buildPad('adminPinPad', 'ad', function(){ return adminEntry; }, intentarLoginAdmin);
 
