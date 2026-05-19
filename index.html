@@ -230,6 +230,24 @@ body.admin-mode .admin-only{display:block}
   .exam-ready-text{font-size:13px;font-weight:700;color:#2ECC71}
   .exam-ready-sub{font-size:11px;color:#888;margin-top:2px}
 
+
+  /* ── PANEL RESULTADOS ADMIN ── */
+  .res-card{background:#132035;border:1px solid #1E3050;border-radius:12px;padding:14px;margin-bottom:12px}
+  .res-header{display:flex;align-items:center;gap:12px;margin-bottom:12px;cursor:pointer}
+  .res-name{font-size:15px;font-weight:700;color:#fff}
+  .res-belt{font-size:11px;color:#888;margin-top:2px}
+  .res-body{display:none}
+  .res-body.open{display:block}
+  .res-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #1a2d44;font-size:12px}
+  .res-row:last-child{border-bottom:none}
+  .res-key{color:#888;flex:1}
+  .res-val{color:#2ECC71;font-weight:700;margin-right:8px}
+  .res-date{color:#555;font-size:10px}
+  .res-stars{color:#F0C040;font-size:13px}
+  .res-summary{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .res-chip{background:rgba(240,192,64,0.1);border:1px solid rgba(240,192,64,0.3);border-radius:6px;padding:3px 8px;font-size:10px;color:#F0C040}
+  .res-empty{color:#555;font-size:12px;padding:8px 0;font-style:italic}
+
 </style>
 </head>
 <body>
@@ -262,6 +280,7 @@ body.admin-mode .admin-only{display:block}
   <button class="bnav-btn admin-only" id="btn-pagos" onclick="goView('pagos')"><span>💰</span>Pagos</button>
   <button class="bnav-btn" id="btn-eventos" onclick="goView('eventos')"><span>📅</span>Eventos</button>
   <button class="bnav-btn admin-only" id="btn-asistencia" onclick="goView('asistencia')"><span>✅</span>Asistencia</button>
+  <button class="bnav-btn admin-only" id="btn-resultados" onclick="goView('resultados')"><span>📊</span>Resultados</button>
 </nav>
 
 <!-- VIEW: INICIO -->
@@ -290,6 +309,11 @@ body.admin-mode .admin-only{display:block}
 <div class="view" id="view-eventos">
   <button class="cal-add-btn admin-only" id="btn-add-evento" onclick="abrirModal('modal-evento')">+ Agregar Evento</button>
   <div id="eventos-list"></div>
+</div>
+
+<!-- VIEW: RESULTADOS (admin) -->
+<div class="view admin-only" id="view-resultados">
+  <div id="resultados-list"></div>
 </div>
 
 <!-- VIEW: ASISTENCIA (admin) -->
@@ -478,6 +502,7 @@ function goView(v) {
   if (v === 'pagos') renderPagos();
   if (v === 'eventos') renderEventos();
   if (v === 'asistencia') renderAsistenciaAdmin();
+  if (v === 'resultados') renderResultados();
 }
 
 // ── PIN PADS ──────────────────────────────────────────────────────────────────
@@ -1117,6 +1142,14 @@ function tSave(si) {
       evals[si]['tl_' + key] = {f: fecha, v: val, s: stars};
     }
   }
+  // Save combo notes
+  var comboNoteEl = document.getElementById('combo_notes_' + si);
+  if (comboNoteEl && comboNoteEl.value.trim() !== '') {
+    if (!evals[si]['combo_notes_hist']) evals[si]['combo_notes_hist'] = [];
+    evals[si]['combo_notes_hist'].push({f: fecha, txt: comboNoteEl.value.trim()});
+    evals[si]['combo_notes_last'] = {f: fecha, txt: comboNoteEl.value.trim()};
+    comboNoteEl.value = '';
+  }
   var qualKeys = ['hosinmano','hosinbong'];
   for (var q = 0; q < qualKeys.length; q++) {
     var qkey = qualKeys[q];
@@ -1179,6 +1212,38 @@ function tQualCard(si, key, saved, s) {
     (last ? '<div class="test-ref">Ultima: ' + last.f + '</div>' : '') +
   '</div>';
 }
+
+function tComboNotes(si, saved) {
+  var last = saved['combo_notes_last'];
+  var hist = saved['combo_notes_hist'] || [];
+  var histHtml = '';
+  if (hist.length > 0) {
+    var recent = hist.slice(-5).reverse();
+    histHtml = '<div style="margin-top:10px">' +
+      '<div style="font-size:10px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:6px">REGISTRO ANTERIOR</div>';
+    for (var i = 0; i < recent.length; i++) {
+      histHtml += '<div style="background:#0D1B2A;border:1px solid #1E3050;border-radius:8px;padding:10px 12px;margin-bottom:6px">' +
+        '<div style="font-size:10px;color:#555;margin-bottom:4px">' + recent[i].f + '</div>' +
+        '<div style="font-size:12px;color:#E8E8E8;white-space:pre-wrap;line-height:1.6">' + recent[i].txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' +
+      '</div>';
+    }
+    histHtml += '</div>';
+  }
+  return '<div class="test-card" style="border-color:rgba(240,192,64,0.3)">' +
+    '<div class="test-name" style="color:#F0C040">&#128221; Mis combinaciones de hoy</div>' +
+    '<div style="font-size:11px;color:#888;margin-bottom:10px;line-height:1.6">' +
+      'Anota las combinaciones que practicaste hoy. Por ejemplo:<br>' +
+      '<span style="color:#555">Patada lateral + puño &nbsp;&bull;&nbsp; Bloqueo + contraataque &nbsp;&bull;&nbsp; Combinacion de 3 tiempos</span>' +
+    '</div>' +
+    '<textarea id="combo_notes_' + si + '" ' +
+      'placeholder="Escribi las combinaciones que hiciste hoy..." ' +
+      'style="width:100%;background:rgba(255,255,255,0.05);border:1px solid #1E3050;border-radius:8px;padding:10px;color:#E8E8E8;font-size:13px;resize:vertical;min-height:90px;font-family:Arial;line-height:1.6"' +
+    '></textarea>' +
+    '<div style="font-size:10px;color:#555;margin-top:4px">Se guarda al tocar el boton de guardar pruebas.</div>' +
+    histHtml +
+  '</div>';
+}
+
 function tRender(si) {
   var el = document.getElementById('test-section-container');
   if (!el) return;
@@ -1208,7 +1273,7 @@ function tRender(si) {
       '</div>' +
       '<div id="tpanel_res">' + resCards + '</div>' +
       '<div id="tpanel_vel" style="display:none">' + velCards + '</div>' +
-      '<div id="tpanel_com" style="display:none">' + comCards + '</div>' +
+      '<div id="tpanel_com" style="display:none">' + comCards + tComboNotes(si, saved) + '</div>' +
       '<div id="tpanel_def" style="display:none">' + defCards + '</div>' +
       '<button class="test-save-btn" onclick="tSave(' + si + ')">&#128190; Guardar Pruebas Fisicas</button>' +
     '</div>';
@@ -1470,37 +1535,61 @@ var RECURSOS = [
 function renderRecursos(si) {
   var el = document.getElementById('recursos-container');
   if (!el) return;
-  var s = si !== undefined ? students[si] : null;
+
   var html = '';
 
-  // Show rank-specific videos first if student is known
-  if (s && s.gup !== 'Tiny Tiger') {
-    var videos = getVideosPorRango(s.gup);
-    if (videos.length > 0) {
-      html += '<div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase">&#127916; Videos de tu rango — ' + s.gup + '</div>';
-      html += '<div style="background:rgba(200,16,46,0.08);border:1px solid rgba(200,16,46,0.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#aaa;line-height:1.5">' +
-        '&#9888;&#65039; <strong style="color:#E8E8E8">Nota sobre las formas (Hyung):</strong> El video del DVD WTSDA contiene todas las formas en secuencia. ' +
-        'Por favor <strong style="color:#fff">ver solo la forma de tu rango actual</strong> — no avanzar a formas de rangos superiores sin indicacion del instructor.' +
-      '</div>';
-      for (var v = 0; v < videos.length; v++) {
-        var vid = videos[v];
-        html += '<a class="recurso-link" href="' + vid.url + '" target="_blank">' +
-          '<div class="recurso-icon">' + vid.icon + '</div>' +
-          '<div class="recurso-info">' +
-            '<div class="recurso-title">' + vid.title + '</div>' +
-            '<div class="recurso-desc">' + vid.desc + '</div>' +
-          '</div>' +
-          '<div class="recurso-arrow">&#8250;</div>' +
-        '</a>';
-      }
-      html += '<div style="height:8px"></div>';
-      html += '<div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase">&#128279; Otros recursos</div>';
-    }
-  }
+  // ── Videos oficiales WTSDA ──────────────────────────────────────────────
+  html += '<div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase">&#127916; Videos oficiales WTSDA</div>';
+  html += '<div style="background:rgba(200,16,46,0.08);border:1px solid rgba(200,16,46,0.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#aaa;line-height:1.6">' +
+    '&#9888;&#65039; Estos videos son del canal oficial de la <strong style="color:#fff">World Tang Soo Do Association</strong>. ' +
+    'Contienen todo el contenido del DVD oficial. Por favor ver <strong style="color:#fff">solo las formas y tecnicas de tu rango actual</strong>. ' +
+    'Tu instructor te indicara cuales te corresponden.' +
+  '</div>';
 
-  // General resources
-  for (var i = 0; i < RECURSOS.length; i++) {
-    var r = RECURSOS[i];
+  html += '<a class="recurso-link" href="https://www.youtube.com/watch?v=pzNAQ1TJN_k" target="_blank">' +
+    '<div class="recurso-icon">&#128203;</div>' +
+    '<div class="recurso-info">' +
+      '<div class="recurso-title">WTSDA Hyung DVD &mdash; Todas las formas</div>' +
+      '<div class="recurso-desc">Sae Kye Hyung, Pyung Ahn, Bassai, Naihanchi y mas &mdash; canal oficial WTSDA</div>' +
+    '</div>' +
+    '<div class="recurso-arrow">&#8250;</div>' +
+  '</a>';
+
+  html += '<a class="recurso-link" href="https://www.youtube.com/watch?v=l-vXqL-0oUo" target="_blank">' +
+    '<div class="recurso-icon">&#129354;</div>' +
+    '<div class="recurso-info">' +
+      '<div class="recurso-title">WTSDA One Step DVD &mdash; Il Soo Sik completo</div>' +
+      '<div class="recurso-desc">Soo Ki (mano) 1-30, Jok Ki (pie) 1-30, Ho Sin Sul (defensa) 1-30 &mdash; canal oficial WTSDA</div>' +
+    '</div>' +
+    '<div class="recurso-arrow">&#8250;</div>' +
+  '</a>';
+
+  html += '<div style="height:10px"></div>';
+
+  // ── Canal YouTube WTSDA ─────────────────────────────────────────────────
+  html += '<a class="recurso-link" href="https://www.youtube.com/c/WorldTangSooDoAssociation" target="_blank">' +
+    '<div class="recurso-icon">&#128250;</div>' +
+    '<div class="recurso-info">' +
+      '<div class="recurso-title">Canal YouTube WTSDA oficial</div>' +
+      '<div class="recurso-desc">World Tang Soo Do Association &mdash; videos, torneos y mas</div>' +
+    '</div>' +
+    '<div class="recurso-arrow">&#8250;</div>' +
+  '</a>';
+
+  html += '<div style="height:6px"></div>';
+  html += '<div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase">&#128279; Dan Kyul</div>';
+
+  // ── Recursos Dan Kyul ───────────────────────────────────────────────────
+  var dkLinks = [
+    {icon:'&#127760;', title:'Sitio web Dan Kyul', desc:'dankyul.com - Informacion del estudio', url:'https://dankyul.com'},
+    {icon:'&#127758;', title:'WTSDA - Sitio oficial', desc:'worldtangsoodo.com - Asociacion mundial', url:'https://worldtangsoodo.com/'},
+    {icon:'&#128248;', title:'Instagram @somosdankyul', desc:'Videos y fotos del dojang', url:'https://instagram.com/somosdankyul'},
+    {icon:'&#128216;', title:'Facebook Dan Kyul', desc:'Dan Kyul Costa Rica', url:'https://www.facebook.com/DanKyulCostaRica'},
+    {icon:'&#127514;', title:'YouTube - Estudio Dan Kyul', desc:'Videos del dojang', url:'https://www.youtube.com/@estudiodankyulcostarica7198'},
+  ];
+
+  for (var i = 0; i < dkLinks.length; i++) {
+    var r = dkLinks[i];
     html += '<a class="recurso-link" href="' + r.url + '" target="_blank">' +
       '<div class="recurso-icon">' + r.icon + '</div>' +
       '<div class="recurso-info">' +
@@ -1513,12 +1602,8 @@ function renderRecursos(si) {
 
   el.innerHTML = '<div class="recursos-section">' +
     '<div class="sec-title">&#128279; RECURSOS Y ENLACES</div>' +
-    html +
-  '</div>';
+    html + '</div>';
 }
-
-
-// ===== RACHA E INSIGNIAS =====
 
 function calcRacha(si) {
   var myAsist = asistencias.filter(function(a){ return a.estudianteId===si && a.estado==='confirmada'; });
@@ -1721,6 +1806,183 @@ function renderBadgeSection(si) {
 
   el.innerHTML = rachaHtml + examHtml +
     '<div class="sec-title">&#127941; MIS INSIGNIAS</div>' + badgesHtml;
+}
+
+
+// ===== PANEL RESULTADOS ADMIN =====
+
+var TNAMES_ALL = {
+  lagartijas:  'Lagartijas (1 min)',
+  abdominales: 'Abdominales (1 min)',
+  sentadillas: 'Sentadillas (1 min)',
+  jumping:     'Jumping Jacks (1 min)',
+  jungkwon:   'Jung Kwon - Punos (1 min)',
+  ahpchaki:   'Ahp Cha Ki - Frontal (1 min)',
+  yupchaki:   'Yup Cha Ki - Lateral (1 min)',
+  tollyo:     'Tollyo Cha Ki - Giratoria (1 min)',
+  comb2:      'Comb. 2 tiempos',
+  comb3:      'Comb. 3 tiempos',
+  combdoble:  'Doble patada',
+  hosinmano:  'Ho Sin Sul - Mano vacia',
+  hosinbong:  'Ho Sin Sul - Bong'
+};
+
+function starsStr(n) {
+  var s = '';
+  for (var i=1;i<=5;i++) s += (i<=n ? '&#9733;' : '&#9734;');
+  return s;
+}
+
+function toggleResBody(id) {
+  var el = document.getElementById('resbody_' + id);
+  if (el) el.classList.toggle('open');
+}
+
+function renderResultados() {
+  var el = document.getElementById('resultados-list');
+  if (!el) return;
+
+  var html = '<div class="sec-title">&#128202; RESULTADOS DE PRUEBAS FISICAS</div>';
+  html += '<p style="font-size:12px;color:#888;margin-bottom:16px">Toca el nombre de cada estudiante para ver sus mediciones.</p>';
+
+  students.forEach(function(s, si) {
+    var saved = evals[si] || {};
+    var keys = Object.keys(TNAMES_ALL);
+    var hasData = false;
+    var chips = [];
+
+    keys.forEach(function(key) {
+      if (saved['tl_' + key]) hasData = true;
+    });
+
+    // Belt image
+    var bi = getBelt(s.gup);
+    var avatarInner = bi
+      ? '<img src="' + bi + '" style="width:36px;height:20px;object-fit:contain">'
+      : s.emoji;
+
+    html += '<div class="res-card">';
+    html += '<div class="res-header" onclick="toggleResBody(' + si + ')">' +
+      '<div style="width:40px;height:40px;border-radius:50%;background:' + s.beltColor + '22;border:2px solid ' + s.beltColor + ';display:flex;align-items:center;justify-content:center;flex-shrink:0">' + avatarInner + '</div>' +
+      '<div><div class="res-name">' + s.fullName + '</div><div class="res-belt">' + s.gup + ' &nbsp;&middot;&nbsp; ' + s.age + ' anos</div></div>' +
+      '<div style="margin-left:auto;color:#555;font-size:18px">&#9660;</div>' +
+    '</div>';
+
+    html += '<div class="res-body" id="resbody_' + si + '">';
+
+    if (!hasData) {
+      html += '<div class="res-empty">Sin mediciones registradas aun.</div>';
+    } else {
+      // Summary chips: best stars per category
+      var catGroups = {
+        'Resistencia': ['lagartijas','abdominales','sentadillas','jumping'],
+        'Velocidad':   ['jungkwon','ahpchaki','yupchaki','tollyo'],
+        'Combinaciones':['comb2','comb3','combdoble'],
+        'Defensa':     ['hosinmano','hosinbong']
+      };
+      var summaryHtml = '<div class="res-summary">';
+      Object.keys(catGroups).forEach(function(catName) {
+        var maxStars = 0;
+        catGroups[catName].forEach(function(key) {
+          var last = saved['tl_' + key];
+          if (last && last.s > maxStars) maxStars = last.s;
+        });
+        if (maxStars > 0) {
+          summaryHtml += '<div class="res-chip">' + catName + ': ' + starsStr(maxStars) + '</div>';
+        }
+      });
+      summaryHtml += '</div>';
+      html += summaryHtml;
+
+      // Detail rows per key
+      keys.forEach(function(key) {
+        var last = saved['tl_' + key];
+        if (!last) return;
+        var hist = saved['th_' + key] || [];
+        var trend = '';
+        if (hist.length >= 2) {
+          var prev = hist[hist.length-2];
+          var diff = last.v - prev.v;
+          trend = diff > 0 ? ' <span style="color:#2ECC71">&#8593;' + diff + '</span>' :
+                  diff < 0 ? ' <span style="color:#E74C3C">&#8595;' + Math.abs(diff) + '</span>' :
+                  ' <span style="color:#888">&#8596;</span>';
+        }
+        html += '<div class="res-row">' +
+          '<span class="res-key">' + TNAMES_ALL[key] + '</span>' +
+          (last.v !== undefined ? '<span class="res-val">' + last.v + (key!=='hosinmano'&&key!=='hosinbong'?' reps':'') + trend + '</span>' : '') +
+          '<span class="res-stars">' + starsStr(last.s) + '</span>' +
+          '<span class="res-date">' + (last.f || '') + '</span>' +
+        '</div>';
+        // History (last 3)
+        if (hist.length > 1) {
+          var recent = hist.slice(-3).reverse();
+          var hHtml = '<div style="padding:4px 0 6px 12px;border-left:2px solid #1E3050;margin-left:4px">';
+          recent.forEach(function(h) {
+            hHtml += '<div style="font-size:10px;color:#555;padding:2px 0">' + h.f + ' &mdash; ' + h.v + (key!=='hosinmano'&&key!=='hosinbong'?' reps':'') + ' ' + starsStr(h.s) + '</div>';
+          });
+          hHtml += '</div>';
+          html += hHtml;
+        }
+      });
+
+      // Eval stars summary
+      var evalCats = [
+        {key:'fis', label:'Fisico', items:['Tecnica','Potencia','Velocidad','Resistencia','Flexibilidad']},
+        {key:'men', label:'Mental', items:['Concentracion','Memoria motora','Respeto','Humildad','Perseverancia']},
+        {key:'emo', label:'Emocional', items:['Motivacion','Confianza','Frustracion','Actitud','Disfrute']}
+      ];
+      var hasEval = false;
+      evalCats.forEach(function(cat) {
+        cat.items.forEach(function(item) {
+          if (saved['e_' + cat.key + '_' + item]) hasEval = true;
+        });
+      });
+      if (hasEval) {
+        html += '<div style="margin-top:10px;font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px">EVALUACION INSTRUCTOR</div>';
+        evalCats.forEach(function(cat) {
+          var totals = 0, count = 0;
+          cat.items.forEach(function(item) {
+            var v = saved['e_' + cat.key + '_' + item];
+            if (v) { totals += v; count++; }
+          });
+          if (count > 0) {
+            var avg = (totals/count).toFixed(1);
+            html += '<div class="res-row">' +
+              '<span class="res-key">' + cat.label + '</span>' +
+              '<span class="res-val">' + avg + '/5</span>' +
+              '<span class="res-stars">' + starsStr(Math.round(totals/count)) + '</span>' +
+            '</div>';
+          }
+        });
+      }
+
+      // Combo notes history
+      var comboHist = saved['combo_notes_hist'] || [];
+      if (comboHist.length > 0) {
+        html += '<div style="margin-top:10px;font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px">COMBINACIONES ANOTADAS</div>';
+        var recentCombos = comboHist.slice(-3).reverse();
+        recentCombos.forEach(function(cn) {
+          html += '<div style="background:#0D1B2A;border:1px solid #1E3050;border-radius:8px;padding:8px 10px;margin-top:6px">' +
+            '<div style="font-size:10px;color:#555;margin-bottom:3px">' + cn.f + '</div>' +
+            '<div style="font-size:11px;color:#E8E8E8;white-space:pre-wrap;line-height:1.5">' + cn.txt.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' +
+          '</div>';
+        });
+      }
+
+      // Badges count
+      var earned = calcBadgesAuto(si);
+      var earnedCount = Object.keys(earned).length;
+      html += '<div style="margin-top:10px;font-size:11px;color:#888">Insignias obtenidas: <strong style="color:#F0C040">' + earnedCount + ' / ' + BADGE_DEFS.length + '</strong></div>';
+
+      // Asistencia count
+      var totalAsist = asistencias.filter(function(a){ return a.estudianteId===si && a.estado==='confirmada'; }).length;
+      html += '<div style="font-size:11px;color:#888">Clases confirmadas: <strong style="color:#2ECC71">' + totalAsist + '</strong></div>';
+    }
+
+    html += '</div></div>'; // close res-body and res-card
+  });
+
+  el.innerHTML = html;
 }
 
 load();
