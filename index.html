@@ -248,6 +248,19 @@ body.admin-mode .admin-only{display:block}
   .res-chip{background:rgba(240,192,64,0.1);border:1px solid rgba(240,192,64,0.3);border-radius:6px;padding:3px 8px;font-size:10px;color:#F0C040}
   .res-empty{color:#555;font-size:12px;padding:8px 0;font-style:italic}
 
+
+  /* ── SYNC / EXPORT-IMPORT ── */
+  .sync-box{background:#132035;border:1px solid #1E3050;border-radius:12px;padding:16px;margin-bottom:14px}
+  .sync-title{font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1.5px;margin-bottom:10px;text-transform:uppercase}
+  .sync-btn{width:100%;padding:12px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px}
+  .sync-btn-export{background:linear-gradient(135deg,#1B3A6B,#2980B9);color:#fff}
+  .sync-btn-import{background:linear-gradient(135deg,#1D6F42,#27AE60);color:#fff}
+  .sync-textarea{width:100%;background:rgba(255,255,255,0.04);border:1px solid #1E3050;border-radius:8px;padding:10px;color:#E8E8E8;font-size:11px;font-family:monospace;resize:vertical;min-height:80px;margin-top:8px}
+  .sync-textarea:focus{outline:none;border-color:#C8102E}
+  .sync-hint{font-size:11px;color:#555;line-height:1.6;margin-top:6px}
+  .import-area{display:none;margin-top:10px}
+  .import-area.open{display:block}
+
 </style>
 </head>
 <body>
@@ -785,8 +798,17 @@ function renderDetail(i) {
     '<div id="test-section-container"></div>' +
     '<div class="divider"></div>' +
     '<div class="sec-title">📊 EVALUACIÓN INDIVIDUAL</div>'+evalH+
-    (adminMode ? '<button class="save-btn" onclick="saveEval('+i+')">💾 Guardar Evaluación</button>' +
-      '<button class="asist-manual-btn" onclick="asistManual('+i+')">✋ Registrar asistencia manual de hoy</button>' : '');
+    (adminMode ? '<button class="save-btn" onclick="saveEval('+i+')">&#128190; Guardar Evaluacion</button>' +
+      '<button class="asist-manual-btn" onclick="asistManual('+i+')">&#9995; Registrar asistencia manual de hoy</button>' : '') +
+    (!adminMode && currentStudentId === i ?
+      '<div class="sync-box" style="margin-top:16px">' +
+        '<div class="sync-title">&#128257; Compartir mis datos con el instructor</div>' +
+        '<p style="font-size:12px;color:#888;margin-bottom:10px;line-height:1.6">Genera un codigo con tus evaluaciones y mediciones para que tu instructor pueda verlas en su panel.</p>' +
+        '<button class="sync-btn sync-btn-export" onclick="exportarDatosEstudiante('+i+')">&#128228; Exportar y enviar mis datos</button>' +
+        '<textarea id="export-code-'+i+'" class="sync-textarea" style="display:none" readonly placeholder="Tu codigo aparecera aqui..."></textarea>' +
+        '<div class="sync-hint">&#128161; Toca el boton, copia el codigo y enviaselo a tu instructor por WhatsApp.</div>' +
+      '</div>'
+      : '');
   // Render dynamic sections after innerHTML is set
   tRender(i);
   renderBadgeSection(i);
@@ -1843,6 +1865,18 @@ function renderResultados() {
   if (!el) return;
 
   var html = '<div class="sec-title">&#128202; RESULTADOS DE PRUEBAS FISICAS</div>';
+
+  // Import section at top
+  html += '<div class="sync-box">' +
+    '<div class="sync-title">&#128229; Importar datos de un estudiante</div>' +
+    '<p style="font-size:12px;color:#888;margin-bottom:10px;line-height:1.6">Cuando un estudiante te envia su codigo, pegalo aqui para ver sus resultados.</p>' +
+    '<button class="sync-btn sync-btn-import" onclick="toggleImportArea()">&#128229; Pegar codigo del estudiante</button>' +
+    '<div class="import-area" id="import-area-admin">' +
+      '<textarea id="import-code-input" class="sync-textarea" placeholder="Pega aqui el codigo DK|..."></textarea>' +
+      '<button class="sync-btn sync-btn-import" style="margin-top:8px" onclick="importarDatos()">&#10003; Importar datos</button>' +
+    '</div>' +
+  '</div>';
+
   html += '<p style="font-size:12px;color:#888;margin-bottom:16px">Toca el nombre de cada estudiante para ver sus mediciones.</p>';
 
   students.forEach(function(s, si) {
@@ -1983,6 +2017,89 @@ function renderResultados() {
   });
 
   el.innerHTML = html;
+}
+
+
+// ===== SINCRONIZACION DE DATOS (Export / Import) =====
+
+function exportarDatosEstudiante(si) {
+  var s = students[si];
+  var data = {
+    v: 1,
+    si: si,
+    nombre: s.fullName,
+    gup: s.gup,
+    fecha: new Date().toISOString().split('T')[0],
+    evals: evals[si] || {},
+    asist: asistencias.filter(function(a){ return a.estudianteId === si; })
+  };
+  var json = JSON.stringify(data);
+  var b64 = btoa(unescape(encodeURIComponent(json)));
+  var codigo = 'DK|' + si + '|' + b64;
+
+  // Try Web Share API first (WhatsApp etc)
+  var msg = '&#x1F9E0; Datos Dan Kyul — ' + s.name + '\n' + new Date().toLocaleDateString('es-CR') + '\n\n' + codigo;
+  if (navigator.share) {
+    navigator.share({title: 'Datos Dan Kyul — ' + s.name, text: msg})
+      .catch(function() { mostrarCodigoExport(si, codigo); });
+  } else {
+    mostrarCodigoExport(si, codigo);
+  }
+}
+
+function mostrarCodigoExport(si, codigo) {
+  var el = document.getElementById('export-code-' + si);
+  if (el) {
+    el.value = codigo;
+    el.style.display = 'block';
+    el.select();
+    try { document.execCommand('copy'); toast('&#128203; Codigo copiado al portapapeles'); }
+    catch(e) { toast('Copia el codigo y enviaselo al instructor'); }
+  }
+}
+
+function toggleImportArea() {
+  var el = document.getElementById('import-area-admin');
+  if (el) el.classList.toggle('open');
+}
+
+function importarDatos() {
+  var el = document.getElementById('import-code-input');
+  if (!el || !el.value.trim()) { toast('Pega el codigo primero'); return; }
+  var raw = el.value.trim();
+  try {
+    if (!raw.startsWith('DK|')) throw new Error('Formato invalido');
+    var parts = raw.split('|');
+    if (parts.length < 3) throw new Error('Codigo incompleto');
+    var si = parseInt(parts[1]);
+    var b64 = parts.slice(2).join('|');
+    var json = decodeURIComponent(escape(atob(b64)));
+    var data = JSON.parse(json);
+
+    // Merge evals
+    if (data.evals && Object.keys(data.evals).length > 0) {
+      evals[si] = data.evals;
+      saveEvals();
+    }
+
+    // Merge asistencias (avoid duplicates by id)
+    if (data.asist && data.asist.length > 0) {
+      var existingIds = {};
+      asistencias.forEach(function(a){ existingIds[a.id] = true; });
+      data.asist.forEach(function(a) {
+        if (!existingIds[a.id]) asistencias.push(a);
+      });
+      saveAsistencias();
+    }
+
+    el.value = '';
+    document.getElementById('import-area-admin').classList.remove('open');
+    toast('&#10003; Datos de ' + students[si].name + ' importados correctamente');
+    renderResultados();
+  } catch(e) {
+    toast('Error: codigo invalido o corrupto');
+    console.error(e);
+  }
 }
 
 load();
