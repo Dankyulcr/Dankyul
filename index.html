@@ -209,6 +209,27 @@ body.admin-mode .admin-only{display:block}
   .recurso-desc{font-size:11px;color:#888;margin-top:2px}
   .recurso-arrow{color:#555;font-size:16px;flex-shrink:0}
 
+
+  /* ── RACHA E INSIGNIAS ── */
+  .racha-box{background:linear-gradient(135deg,#1B3A6B,#0A1628);border:1px solid #C8102E;border-radius:12px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:14px}
+  .racha-icon{font-size:36px;flex-shrink:0}
+  .racha-num{font-size:32px;font-weight:700;color:#F0C040;line-height:1}
+  .racha-label{font-size:11px;color:#888;margin-top:2px;letter-spacing:1px}
+  .racha-best{font-size:11px;color:#555;margin-top:4px}
+  .badges-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+  .badge-item{background:#132035;border:1px solid #1E3050;border-radius:10px;padding:12px 8px;text-align:center}
+  .badge-item.earned{border-color:#F0C040;background:rgba(240,192,64,0.06)}
+  .badge-item.locked{opacity:0.35;filter:grayscale(1)}
+  .badge-emoji{font-size:26px;margin-bottom:5px;display:block}
+  .badge-name{font-size:10px;font-weight:700;color:#E8E8E8;line-height:1.3}
+  .badge-date{font-size:9px;color:#F0C040;margin-top:3px}
+  .badge-locked-label{font-size:9px;color:#555;margin-top:3px}
+  .badge-category{font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1.5px;margin:14px 0 8px;text-transform:uppercase}
+  .exam-ready-box{background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.4);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
+  .exam-ready-icon{font-size:24px;flex-shrink:0}
+  .exam-ready-text{font-size:13px;font-weight:700;color:#2ECC71}
+  .exam-ready-sub{font-size:11px;color:#888;margin-top:2px}
+
 </style>
 </head>
 <body>
@@ -652,7 +673,7 @@ function goDetail(i) {
   document.getElementById('view-estudiantes').classList.add('on');
   document.getElementById('btn-estudiantes').classList.add('on');
   renderEstudiantes();
-  setTimeout(function(){ document.getElementById('detail-container').scrollIntoView({behavior:'smooth'}); tRender(i); renderRecursos(i); }, 100);
+  setTimeout(function(){ document.getElementById('detail-container').scrollIntoView({behavior:'smooth'}); tRender(i); renderBadgeSection(i); renderRecursos(i); }, 100);
 }
 
 // ── RENDER DETAIL ─────────────────────────────────────────────────────────────
@@ -732,6 +753,8 @@ function renderDetail(i) {
     '<div class="divider"></div>' +
     '<div class="sec-title">🧠 ESTRATEGIA MENTAL Y EMOCIONAL</div>'+mentalH+
     '<div class="divider"></div>' +
+    '<div id="badge-section-container"></div>' +
+    '<div class="divider"></div>' +
     '<div id="recursos-container"></div>' +
     '<div class="divider"></div>' +
     '<div id="test-section-container"></div>' +
@@ -741,6 +764,7 @@ function renderDetail(i) {
       '<button class="asist-manual-btn" onclick="asistManual('+i+')">✋ Registrar asistencia manual de hoy</button>' : '');
   // Render dynamic sections after innerHTML is set
   tRender(i);
+  renderBadgeSection(i);
   renderRecursos(i);
 }
 
@@ -1491,6 +1515,212 @@ function renderRecursos(si) {
     '<div class="sec-title">&#128279; RECURSOS Y ENLACES</div>' +
     html +
   '</div>';
+}
+
+
+// ===== RACHA E INSIGNIAS =====
+
+function calcRacha(si) {
+  var myAsist = asistencias.filter(function(a){ return a.estudianteId===si && a.estado==='confirmada'; });
+  if (!myAsist.length) return {current:0, best:0, total:0};
+  var seen = {};
+  myAsist.forEach(function(a){ seen[a.fecha]=true; });
+  var dates = Object.keys(seen).sort();
+  var current=1, best=1, temp=1;
+  for (var i=1;i<dates.length;i++){
+    var prev=new Date(dates[i-1]+'T12:00:00');
+    var curr=new Date(dates[i]+'T12:00:00');
+    var diff=Math.round((curr-prev)/(1000*60*60*24));
+    if(diff<=7){temp++;if(temp>best)best=temp;}else{temp=1;}
+  }
+  current=temp;
+  return {current:current, best:best, total:dates.length};
+}
+
+var BADGE_DEFS = [
+  // Asistencia
+  {id:'primera_clase',  emoji:'&#129355;', name:'Primera Clase',      cat:'asistencia', auto:true},
+  {id:'mes1',           emoji:'&#128197;', name:'1 Mes Activo',       cat:'asistencia', auto:true},
+  {id:'mes3',           emoji:'&#11088;',  name:'3 Meses',            cat:'asistencia', auto:true},
+  {id:'mes6',           emoji:'&#127381;', name:'6 Meses',            cat:'asistencia', auto:true},
+  {id:'anio1',          emoji:'&#127942;', name:'1 Ano Activo',       cat:'asistencia', auto:true},
+  {id:'clases10',       emoji:'&#128170;', name:'10 Clases',          cat:'asistencia', auto:true},
+  {id:'clases25',       emoji:'&#128293;', name:'25 Clases',          cat:'asistencia', auto:true},
+  {id:'clases50',       emoji:'&#9889;',   name:'50 Clases',          cat:'asistencia', auto:true},
+  // Programas infantiles
+  {id:'tiny_tiger',     emoji:'&#128047;', name:'Cachorro de Tigre',  cat:'programa',  auto:false},
+  {id:'little_dragon',  emoji:'&#129409;', name:'Pequeno Dragon',     cat:'programa',  auto:false},
+  // Cinturones Gup
+  {id:'blanco',  emoji:'&#11036;',  name:'Cinturon Blanco',  cat:'rango', auto:true},
+  {id:'naranja', emoji:'&#127280;', name:'Cinturon Naranja', cat:'rango', auto:true},
+  {id:'verde',   emoji:'&#129001;', name:'Cinturon Verde',   cat:'rango', auto:true},
+  {id:'marron',  emoji:'&#129521;', name:'Cinturon Marron',  cat:'rango', auto:true},
+  {id:'rojo',    emoji:'&#128308;', name:'Cinturon Rojo',    cat:'rango', auto:true},
+  {id:'azul',    emoji:'&#128309;', name:'Cho Dan Bo',       cat:'rango', auto:true},
+  // Cinturones Dan
+  {id:'cho_dan',        emoji:'&#11035;', name:'Cho Dan - 1er Dan',       cat:'dan', auto:true},
+  {id:'e_dan',          emoji:'&#11035;', name:'E Dan - 2do Dan',         cat:'dan', auto:true},
+  {id:'sam_dan',        emoji:'&#11035;', name:'Sam Dan - 3er Dan',       cat:'dan', auto:true},
+  {id:'sah_dan',        emoji:'&#11035;', name:'Sah Dan - 4to Dan',       cat:'dan', auto:true},
+  {id:'sah_dan_master', emoji:'&#128081;',name:'Sah Dan Master',          cat:'dan', auto:true},
+  // Rol
+  {id:'instructor',    emoji:'&#127979;', name:'Instructor',        cat:'rol', auto:false},
+  {id:'dueno_escuela', emoji:'&#127968;', name:'Dueno de Escuela',  cat:'rol', auto:false},
+  // Eventos y campeonatos
+  {id:'primer_torneo',   emoji:'&#127937;', name:'Primer Torneo',     cat:'evento', auto:false},
+  {id:'medalla_oro',     emoji:'&#129351;', name:'Medalla de Oro',    cat:'evento', auto:false},
+  {id:'medalla_plata',   emoji:'&#129352;', name:'Medalla de Plata',  cat:'evento', auto:false},
+  {id:'medalla_bronce',  emoji:'&#129353;', name:'Medalla de Bronce', cat:'evento', auto:false},
+  {id:'clinica',         emoji:'&#127891;', name:'Clinica WTSDA',     cat:'evento', auto:false},
+  {id:'campeon_regional',emoji:'&#127885;', name:'Campeon Regional',  cat:'evento', auto:false},
+  {id:'campeon_nacional',emoji:'&#127464;&#127479;', name:'Campeon Nacional', cat:'evento', auto:false},
+  {id:'campeon_mundial', emoji:'&#127758;', name:'Campeon Mundial',   cat:'evento', auto:false},
+  // Logros
+  {id:'primera_eval',   emoji:'&#128202;', name:'Primera Evaluacion', cat:'logro', auto:true},
+  {id:'cinco_estrellas',emoji:'&#127775;', name:'5 Estrellas',        cat:'logro', auto:true},
+  {id:'pruebas_fisicas',emoji:'&#127939;', name:'Pruebas Fisicas',    cat:'logro', auto:true},
+];
+
+var BADGE_CATS = [
+  {id:'asistencia', label:'&#128197; Asistencia y Tiempo'},
+  {id:'programa',   label:'&#128047; Programas Infantiles'},
+  {id:'rango',      label:'&#129354; Cinturones Gup'},
+  {id:'dan',        label:'&#11035; Cinturones Dan'},
+  {id:'rol',        label:'&#127979; Rol en el Dojang'},
+  {id:'evento',     label:'&#127942; Eventos y Campeonatos'},
+  {id:'logro',      label:'&#11088; Logros Personales'},
+];
+
+function calcBadgesAuto(si) {
+  var s = students[si];
+  var saved = evals[si] || {};
+  var myAsist = asistencias.filter(function(a){ return a.estudianteId===si && a.estado==='confirmada'; });
+  var seen = {};
+  myAsist.forEach(function(a){ seen[a.fecha]=true; });
+  var totalClases = Object.keys(seen).length;
+  var racha = calcRacha(si);
+  var manual = (saved['badges'] || {});
+  var earned = {};
+
+  // Asistencia auto
+  if (totalClases >= 1) earned['primera_clase'] = '&#10003;';
+  if (totalClases >= 4 || racha.current >= 4)  earned['mes1'] = '&#10003;';
+  if (totalClases >= 12 || racha.current >= 12) earned['mes3'] = '&#10003;';
+  if (totalClases >= 24 || racha.current >= 24) earned['mes6'] = '&#10003;';
+  if (totalClases >= 48 || racha.current >= 48) earned['anio1'] = '&#10003;';
+  if (totalClases >= 10) earned['clases10'] = '&#10003;';
+  if (totalClases >= 25) earned['clases25'] = '&#10003;';
+  if (totalClases >= 50) earned['clases50'] = '&#10003;';
+
+  // Rango auto
+  var gup = s.gup;
+  var rankOrder = ['9no','8vo','7mo','6to','5to','4to','3er','2do','1er','Cho Dan Bo','Cho Dan','E Dan','Sam Dan','Sah Dan'];
+  var rIdx = -1;
+  for (var ri=0;ri<rankOrder.length;ri++) { if(gup.indexOf(rankOrder[ri])!==-1){rIdx=ri;break;} }
+  if (rIdx >= 0)  earned['blanco']  = '&#10003;';
+  if (rIdx >= 2)  earned['naranja'] = '&#10003;';
+  if (rIdx >= 4)  earned['verde']   = '&#10003;';
+  if (rIdx >= 6)  earned['marron']  = '&#10003;';
+  if (rIdx >= 8)  earned['rojo']    = '&#10003;';
+  if (rIdx >= 9)  earned['azul']    = '&#10003;';
+  if (rIdx >= 10) earned['cho_dan'] = '&#10003;';
+  if (rIdx >= 11) earned['e_dan']   = '&#10003;';
+  if (rIdx >= 12) earned['sam_dan'] = '&#10003;';
+  if (gup.indexOf('Sah Dan') !== -1) earned['sah_dan'] = '&#10003;';
+  if (gup.indexOf('Sah Dan Master') !== -1) earned['sah_dan_master'] = '&#10003;';
+  // Tiny Tiger / Little Dragon autos
+  if (gup === 'Tiny Tiger') earned['tiny_tiger'] = '&#10003;';
+  if (gup.indexOf('Pequeno') !== -1 || gup.indexOf('Pequeño') !== -1) earned['little_dragon'] = '&#10003;';
+  // Instructor / dueno auto
+  if (gup.indexOf('Sah Dan Master') !== -1) { earned['instructor']='&#10003;'; earned['dueno_escuela']='&#10003;'; }
+  else if (gup.indexOf('Sam Dan')!==-1||gup.indexOf('E Dan')!==-1) earned['instructor']='&#10003;';
+
+  // Eval logros auto
+  var cats=['fis','men','emo'];
+  var items=['Tecnica','Potencia','Velocidad','Resistencia','Flexibilidad','Concentracion','Memoria motora','Respeto','Humildad','Perseverancia','Motivacion','Confianza','Frustracion','Actitud','Disfrute'];
+  var hasEval=false, hasFive=false;
+  for(var c=0;c<cats.length;c++){for(var it=0;it<items.length;it++){var v=saved['e_'+cats[c]+'_'+items[it]];if(v){hasEval=true;if(v>=5)hasFive=true;}}}
+  if(hasEval) earned['primera_eval']='&#10003;';
+  if(hasFive) earned['cinco_estrellas']='&#10003;';
+  var tkeys=['lagartijas','abdominales','sentadillas','jumping','jungkwon','ahpchaki','yupchaki','tollyo'];
+  for(var tk=0;tk<tkeys.length;tk++){if(saved['tl_'+tkeys[tk]]){earned['pruebas_fisicas']='&#10003;';break;}}
+
+  // Merge manual badges
+  for(var bid in manual){ if(manual[bid]) earned[bid]=manual[bid]; }
+  return earned;
+}
+
+function grantBadge(si, badgeId) {
+  if(!evals[si]) evals[si]={};
+  if(!evals[si]['badges']) evals[si]['badges']={};
+  var fecha = new Date().toLocaleDateString('es-CR');
+  evals[si]['badges'][badgeId] = fecha;
+  saveEvals();
+  renderBadgeSection(si);
+  toast('&#127885; Insignia otorgada');
+}
+
+function revokeBadge(si, badgeId) {
+  if(evals[si] && evals[si]['badges']) {
+    delete evals[si]['badges'][badgeId];
+    saveEvals();
+    renderBadgeSection(si);
+    toast('Insignia removida');
+  }
+}
+
+function renderBadgeSection(si) {
+  var el = document.getElementById('badge-section-container');
+  if(!el) return;
+  var s = students[si];
+  var racha = calcRacha(si);
+  var earned = calcBadgesAuto(si);
+  var totalEarned = Object.keys(earned).length;
+
+  // Racha box
+  var rachaHtml = '<div class="racha-box">' +
+    '<div class="racha-icon">&#128293;</div>' +
+    '<div>' +
+      '<div class="racha-num">' + racha.current + '</div>' +
+      '<div class="racha-label">SEMANAS CONSECUTIVAS</div>' +
+      '<div class="racha-best">Mejor racha: ' + racha.best + ' &nbsp;&middot;&nbsp; Total clases: ' + racha.total + '</div>' +
+    '</div></div>';
+
+  // Exam ready
+  var examHtml = '';
+  if (s.months >= s.monthsNeeded && s.monthsNeeded < 999) {
+    var nextR = s.targetGup.indexOf('&#8594;')!==-1 ? s.targetGup.split('&#8594;')[1].trim() :
+                s.targetGup.indexOf('→')!==-1 ? s.targetGup.split('→')[1].trim() : s.targetGup;
+    examHtml = '<div class="exam-ready-box">' +
+      '<div class="exam-ready-icon">&#127941;</div>' +
+      '<div><div class="exam-ready-text">Listo para examen de rango</div>' +
+      '<div class="exam-ready-sub">Cumples el tiempo minimo para ' + nextR + '</div></div></div>';
+  }
+
+  // Badges
+  var badgesHtml = '<div style="font-size:12px;color:#888;margin-bottom:12px">' + totalEarned + ' de ' + BADGE_DEFS.length + ' insignias obtenidas</div>';
+  BADGE_CATS.forEach(function(cat) {
+    var catBadges = BADGE_DEFS.filter(function(b){ return b.cat===cat.id; });
+    badgesHtml += '<div class="badge-category">' + cat.label + '</div><div class="badges-grid">';
+    catBadges.forEach(function(b) {
+      var isEarned = !!earned[b.id];
+      var dateStr = (earned[b.id] && earned[b.id] !== '&#10003;') ? earned[b.id] : '';
+      var adminCtrl = adminMode ? (
+        isEarned ?
+          '<button onclick="revokeBadge('+si+',\''+b.id+'\')" style="background:none;border:none;color:#555;font-size:9px;cursor:pointer;margin-top:2px;display:block;width:100%">quitar</button>' :
+          '<button onclick="grantBadge('+si+',\''+b.id+'\')" style="background:rgba(200,16,46,0.15);border:1px solid #C8102E;color:#C8102E;font-size:9px;cursor:pointer;border-radius:4px;padding:2px 6px;margin-top:4px;display:block;width:100%">otorgar</button>'
+      ) : '';
+      badgesHtml += '<div class="badge-item ' + (isEarned?'earned':'locked') + '">' +
+        '<span class="badge-emoji">' + b.emoji + '</span>' +
+        '<div class="badge-name">' + b.name + '</div>' +
+        (isEarned ? '<div class="badge-date">' + (dateStr||'&#10003;') + '</div>' : '<div class="badge-locked-label">&#128274;</div>') +
+        adminCtrl + '</div>';
+    });
+    badgesHtml += '</div>';
+  });
+
+  el.innerHTML = rachaHtml + examHtml +
+    '<div class="sec-title">&#127941; MIS INSIGNIAS</div>' + badgesHtml;
 }
 
 load();
