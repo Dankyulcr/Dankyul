@@ -756,7 +756,7 @@ function goDetail(i) {
   document.getElementById('view-estudiantes').classList.add('on');
   document.getElementById('btn-estudiantes').classList.add('on');
   renderEstudiantes();
-  setTimeout(function(){ document.getElementById('detail-container').scrollIntoView({behavior:'smooth'}); tRender(i); renderBadgeSection(i); renderRecursos(i); }, 100);
+  setTimeout(function(){ document.getElementById('detail-container').scrollIntoView({behavior:'smooth'}); tRender(i); renderRecursos(i); }, 100);
 }
 
 // ── RENDER DETAIL ─────────────────────────────────────────────────────────────
@@ -835,9 +835,6 @@ function renderDetail(i) {
     stepsH +
     '<div class="divider"></div>' +
     '<div class="sec-title">🧠 ESTRATEGIA MENTAL Y EMOCIONAL</div>'+mentalH+
-    '<div class="divider"></div>' +
-    '<div id="badge-section-container"></div>' +
-    '<div class="divider"></div>' +
     '<div id="recursos-container"></div>' +
     '<div class="divider"></div>' +
     '<div id="test-section-container"></div>' +
@@ -857,7 +854,6 @@ function renderDetail(i) {
       : '');
   // Render dynamic sections after innerHTML is set
   tRender(i);
-  renderBadgeSection(i);
   renderRecursos(i);
 }
 
@@ -1818,20 +1814,22 @@ function grantBadge(si, badgeId) {
   var fecha = new Date().toLocaleDateString('es-CR');
   evals[si]['badges'][badgeId] = fecha;
   saveEvals();
-  renderBadgeSection(si);
-  toast('&#127885; Insignia otorgada');
+  if (adminMode) { _renderInsigniasAdminPanel(si); } else { renderInsigniasView(); }
+  toast('\u2605 Insignia otorgada');
 }
 
 function revokeBadge(si, badgeId) {
   if(evals[si] && evals[si]['badges']) {
     delete evals[si]['badges'][badgeId];
     saveEvals();
-    renderBadgeSection(si);
+    if (adminMode) { _renderInsigniasAdminPanel(si); } else { renderInsigniasView(); }
     toast('Insignia removida');
   }
 }
 
 function renderBadgeSection(si) {
+  // Badge section removed from student detail — handled by insignias view
+  return;
   var el = document.getElementById('badge-section-container');
   if(!el) return;
   var s = students[si];
@@ -2161,26 +2159,40 @@ function importarDatos() {
 function renderInsigniasView() {
   var el = document.getElementById('insignias-view-container');
   if (!el) return;
-  var si = (currentStudentId !== null && !adminMode) ? currentStudentId : (currentStudent !== null ? currentStudent : null);
-  if (si === null) {
-    var html = '<div class="sec-title">🏅 INSIGNIAS — TODOS LOS ESTUDIANTES</div>';
+  var si = (currentStudentId !== null && !adminMode) ? currentStudentId : null;
+
+  if (adminMode) {
+    // ── ADMIN: lista de todos los estudiantes con controles de otorgar/quitar ──
+    var html = '<div class="sec-title">🏅 INSIGNIAS POR ESTUDIANTE</div>' +
+      '<div style="font-size:12px;color:#888;margin-bottom:14px;line-height:1.6">Toca un estudiante para ver y gestionar sus insignias. Los íconos 🔒 son insignias no ganadas — podés otorgarlas manualmente.</div>';
     students.forEach(function(s, idx) {
       var earned = calcBadgesAuto(idx);
       var total = Object.keys(earned).length;
       var bi = getBelt(s.gup);
       var av = bi ? '<img src="'+bi+'" style="width:32px;height:18px;object-fit:contain">' : s.emoji;
+      var pct = Math.round(total / BADGE_DEFS.length * 100);
       html += '<div class="res-card">' +
-        '<div class="res-header" onclick="renderInsigniasDetalle('+idx+')" style="cursor:pointer">' +
-          '<div style="width:38px;height:38px;border-radius:50%;background:'+s.beltColor+'22;border:2px solid '+s.beltColor+';display:flex;align-items:center;justify-content:center;flex-shrink:0">'+av+'</div>' +
-          '<div><div class="res-name">'+s.name+'</div><div class="res-belt">'+total+' / '+BADGE_DEFS.length+' insignias</div></div>' +
-          '<div style="margin-left:auto;color:#F0C040;font-size:13px">'+starsStr(Math.round(total/BADGE_DEFS.length*5))+'</div>' +
+        '<div class="res-header" onclick="toggleInsigniasAdmin('+idx+')" style="cursor:pointer;user-select:none">' +
+          '<div style="width:40px;height:40px;border-radius:50%;background:'+s.beltColor+'22;border:2px solid '+s.beltColor+';display:flex;align-items:center;justify-content:center;flex-shrink:0">'+av+'</div>' +
+          '<div style="flex:1">' +
+            '<div class="res-name">'+s.name+'</div>' +
+            '<div class="res-belt">'+s.gup+'</div>' +
+            '<div style="margin-top:5px;display:flex;align-items:center;gap:8px">' +
+              '<div style="flex:1;height:4px;background:#1E3050;border-radius:2px"><div style="width:'+pct+'%;height:100%;background:#F0C040;border-radius:2px"></div></div>' +
+              '<span style="font-size:10px;color:#F0C040;flex-shrink:0">'+total+'/'+BADGE_DEFS.length+'</span>' +
+            '</div>' +
+          '</div>' +
+          '<div style="color:#555;font-size:18px;margin-left:8px" id="insig-chev-'+idx+'">▼</div>' +
         '</div>' +
-        '<div id="insig-det-'+idx+'" class="res-body"></div>' +
+        '<div id="insig-det-'+idx+'" class="res-body" style="padding-top:4px"></div>' +
       '</div>';
     });
     el.innerHTML = html;
+
   } else {
-    var s = students[si];
+    // ── ESTUDIANTE: sus propias insignias con racha ──
+    var s = students[si !== null ? si : 0];
+    if (si === null) { el.innerHTML = ''; return; }
     var racha = calcRacha(si);
     var earned = calcBadgesAuto(si);
     var totalEarned = Object.keys(earned).length;
@@ -2201,7 +2213,7 @@ function renderInsigniasView() {
       html += '<div class="badge-category">' + cat.label + '</div><div class="badges-grid">';
       catBadges.forEach(function(b) {
         var isEarned = !!earned[b.id];
-        var dateStr = (earned[b.id] && earned[b.id] !== '✓') ? earned[b.id] : '';
+        var dateStr = (earned[b.id] && earned[b.id] !== '\u2713') ? earned[b.id] : '';
         html += '<div class="badge-item ' + (isEarned?'earned':'locked') + '">' +
           '<span class="badge-emoji">' + b.emoji + '</span>' +
           '<div class="badge-name">' + b.name + '</div>' +
@@ -2212,6 +2224,64 @@ function renderInsigniasView() {
     });
     el.innerHTML = html;
   }
+}
+
+function toggleInsigniasAdmin(si) {
+  var det = document.getElementById('insig-det-'+si);
+  var chev = document.getElementById('insig-chev-'+si);
+  if (!det) return;
+  if (det.classList.contains('open')) {
+    det.classList.remove('open');
+    if (chev) chev.textContent = '▼';
+    return;
+  }
+  if (chev) chev.textContent = '▲';
+  _renderInsigniasAdminPanel(si);
+  det.classList.add('open');
+}
+
+function _renderInsigniasAdminPanel(si) {
+  var det = document.getElementById('insig-det-'+si);
+  if (!det) return;
+  var earned = calcBadgesAuto(si);
+
+  // Filter tabs: Todas / Solo no ganadas
+  var showAll = det.dataset.filter !== 'pending';
+  var toggleLabel = showAll ? '🔒 Ver solo no ganadas' : '🏅 Ver todas';
+
+  var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
+    '<span style="font-size:11px;color:#888">' + Object.keys(earned).length + ' ganadas · ' + (BADGE_DEFS.length - Object.keys(earned).length) + ' pendientes</span>' +
+    '<button onclick="_toggleInsigFilter('+si+')" style="background:#1E3050;border:1px solid #2a4070;color:#aaa;font-size:10px;padding:4px 10px;border-radius:6px;cursor:pointer">'+toggleLabel+'</button>' +
+  '</div>';
+
+  BADGE_CATS.forEach(function(cat) {
+    var catBadges = BADGE_DEFS.filter(function(b){ return b.cat===cat.id; });
+    var visible = catBadges.filter(function(b){ return showAll || !earned[b.id]; });
+    if (!visible.length) return;
+    html += '<div class="badge-category" style="margin-top:8px">' + cat.label + '</div><div class="badges-grid">';
+    visible.forEach(function(b) {
+      var isEarned = !!earned[b.id];
+      var dateStr = (earned[b.id] && earned[b.id] !== '\u2713') ? earned[b.id] : '';
+      var ctrl = isEarned
+        ? '<button onclick="grantBadge('+si+',\''+b.id+'\');_renderInsigniasAdminPanel('+si+')" style="background:none;border:1px solid #333;color:#555;font-size:9px;cursor:pointer;border-radius:4px;padding:2px 6px;margin-top:4px;display:block;width:100%">✕ quitar</button>'
+        : '<button onclick="grantBadge('+si+',\''+b.id+'\');_renderInsigniasAdminPanel('+si+')" style="background:rgba(200,16,46,0.15);border:1px solid #C8102E;color:#C8102E;font-size:9px;cursor:pointer;border-radius:4px;padding:3px 6px;margin-top:4px;display:block;width:100%">＋ otorgar</button>';
+      html += '<div class="badge-item '+(isEarned?'earned':'locked')+'">' +
+        '<span class="badge-emoji">'+b.emoji+'</span>' +
+        '<div class="badge-name">'+b.name+'</div>' +
+        (isEarned ? '<div class="badge-date">'+(dateStr||'✓')+'</div>' : '<div class="badge-locked-label">🔒</div>') +
+        ctrl + '</div>';
+    });
+    html += '</div>';
+  });
+
+  det.innerHTML = html;
+}
+
+function _toggleInsigFilter(si) {
+  var det = document.getElementById('insig-det-'+si);
+  if (!det) return;
+  det.dataset.filter = det.dataset.filter === 'pending' ? 'all' : 'pending';
+  _renderInsigniasAdminPanel(si);
 }
 
 function renderInsigniasDetalle(si) {
