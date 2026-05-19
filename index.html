@@ -2263,7 +2263,7 @@ function _renderInsigniasAdminPanel(si) {
       var isEarned = !!earned[b.id];
       var dateStr = (earned[b.id] && earned[b.id] !== '\u2713') ? earned[b.id] : '';
       var ctrl = isEarned
-        ? '<button onclick="grantBadge('+si+',\''+b.id+'\');_renderInsigniasAdminPanel('+si+')" style="background:none;border:1px solid #333;color:#555;font-size:9px;cursor:pointer;border-radius:4px;padding:2px 6px;margin-top:4px;display:block;width:100%">✕ quitar</button>'
+        ? '<button onclick="revokeBadge('+si+',\''+b.id+'\');_renderInsigniasAdminPanel('+si+')" style="background:none;border:1px solid #333;color:#555;font-size:9px;cursor:pointer;border-radius:4px;padding:2px 6px;margin-top:4px;display:block;width:100%">✕ quitar</button>'
         : '<button onclick="grantBadge('+si+',\''+b.id+'\');_renderInsigniasAdminPanel('+si+')" style="background:rgba(200,16,46,0.15);border:1px solid #C8102E;color:#C8102E;font-size:9px;cursor:pointer;border-radius:4px;padding:3px 6px;margin-top:4px;display:block;width:100%">＋ otorgar</button>';
       html += '<div class="badge-item '+(isEarned?'earned':'locked')+'">' +
         '<span class="badge-emoji">'+b.emoji+'</span>' +
