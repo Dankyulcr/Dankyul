@@ -209,30 +209,6 @@ body.admin-mode .admin-only{display:block}
   .recurso-desc{font-size:11px;color:#888;margin-top:2px}
   .recurso-arrow{color:#555;font-size:16px;flex-shrink:0}
 
-
-  /* RACHA E INSIGNIAS */
-  .racha-box{background:linear-gradient(135deg,#1B3A6B,#0A1628);border:1px solid #C8102E;border-radius:12px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:14px}
-  .racha-icon{font-size:36px;flex-shrink:0}
-  .racha-num{font-size:32px;font-weight:700;color:#F0C040;line-height:1}
-  .racha-label{font-size:11px;color:#888;margin-top:2px;letter-spacing:1px}
-  .racha-best{font-size:11px;color:#555;margin-top:4px}
-
-  .badges-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
-  .badge-item{background:#132035;border:1px solid #1E3050;border-radius:10px;padding:12px 8px;text-align:center;position:relative}
-  .badge-item.earned{border-color:#F0C040;background:rgba(240,192,64,0.06)}
-  .badge-item.locked{opacity:0.4;filter:grayscale(1)}
-  .badge-emoji{font-size:28px;margin-bottom:6px;display:block}
-  .badge-name{font-size:10px;font-weight:700;color:#E8E8E8;line-height:1.3}
-  .badge-date{font-size:9px;color:#F0C040;margin-top:3px}
-  .badge-locked-label{font-size:9px;color:#555;margin-top:3px}
-
-  .badge-category{font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1.5px;margin:14px 0 8px;text-transform:uppercase}
-
-  .exam-ready-box{background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.4);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
-  .exam-ready-icon{font-size:24px;flex-shrink:0}
-  .exam-ready-text{font-size:13px;font-weight:700;color:#2ECC71}
-  .exam-ready-sub{font-size:11px;color:#888;margin-top:2px}
-
 </style>
 </head>
 <body>
@@ -676,7 +652,7 @@ function goDetail(i) {
   document.getElementById('view-estudiantes').classList.add('on');
   document.getElementById('btn-estudiantes').classList.add('on');
   renderEstudiantes();
-  setTimeout(function(){ document.getElementById('detail-container').scrollIntoView({behavior:'smooth'}); tRender(i); renderBadgeSection(i); renderRecursos(i); }, 100);
+  setTimeout(function(){ document.getElementById('detail-container').scrollIntoView({behavior:'smooth'}); tRender(i); renderRecursos(i); }, 100);
 }
 
 // ── RENDER DETAIL ─────────────────────────────────────────────────────────────
@@ -756,8 +732,6 @@ function renderDetail(i) {
     '<div class="divider"></div>' +
     '<div class="sec-title">🧠 ESTRATEGIA MENTAL Y EMOCIONAL</div>'+mentalH+
     '<div class="divider"></div>' +
-    '<div id="badge-section-container"></div>' +
-    '<div class="divider"></div>' +
     '<div id="recursos-container"></div>' +
     '<div class="divider"></div>' +
     '<div id="test-section-container"></div>' +
@@ -767,7 +741,6 @@ function renderDetail(i) {
       '<button class="asist-manual-btn" onclick="asistManual('+i+')">✋ Registrar asistencia manual de hoy</button>' : '');
   // Render dynamic sections after innerHTML is set
   tRender(i);
-  renderBadgeSection(i);
   renderRecursos(i);
 }
 
@@ -1476,32 +1449,29 @@ function renderRecursos(si) {
   var s = si !== undefined ? students[si] : null;
   var html = '';
 
-  // Show WTSDA official videos with note (2 links only)
+  // Show rank-specific videos first if student is known
   if (s && s.gup !== 'Tiny Tiger') {
-    html += '<div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase">&#127916; Videos oficiales WTSDA</div>';
-    html += '<div style="background:rgba(200,16,46,0.08);border:1px solid rgba(200,16,46,0.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#aaa;line-height:1.6">' +
-      '&#9888;&#65039; Estos videos contienen <strong style="color:#fff">todo el contenido de la WTSDA</strong>. ' +
-      'Por favor ver <strong style="color:#fff">solo las formas y tecnicas de tu rango actual</strong>. ' +
-      'Tu instructor te indicara cuales te corresponden.' +
-    '</div>';
-    html += '<a class="recurso-link" href="https://www.youtube.com/watch?v=pzNAQ1TJN_k" target="_blank">' +
-      '<div class="recurso-icon">&#128203;</div>' +
-      '<div class="recurso-info">' +
-        '<div class="recurso-title">DVD Hyung WTSDA — Todas las formas</div>' +
-        '<div class="recurso-desc">Sae Kye, Pyung Ahn, Bassai, Naihanchi y mas — ver solo las de tu rango</div>' +
-      '</div>' +
-      '<div class="recurso-arrow">&#8250;</div>' +
-    '</a>';
-    html += '<a class="recurso-link" href="https://youtu.be/l-vXqL-0oUo" target="_blank">' +
-      '<div class="recurso-icon">&#129354;</div>' +
-      '<div class="recurso-info">' +
-        '<div class="recurso-title">DVD Il Soo Sik Dae Ryun — Tecnicas 1-30</div>' +
-        '<div class="recurso-desc">Soo Ki, Jok Ki y Ho Sin Sul completo — ver solo las tecnicas de tu rango</div>' +
-      '</div>' +
-      '<div class="recurso-arrow">&#8250;</div>' +
-    '</a>';
-    html += '<div style="height:8px"></div>';
-    html += '<div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase">&#128279; Otros recursos</div>';
+    var videos = getVideosPorRango(s.gup);
+    if (videos.length > 0) {
+      html += '<div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase">&#127916; Videos de tu rango — ' + s.gup + '</div>';
+      html += '<div style="background:rgba(200,16,46,0.08);border:1px solid rgba(200,16,46,0.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#aaa;line-height:1.5">' +
+        '&#9888;&#65039; <strong style="color:#E8E8E8">Nota sobre las formas (Hyung):</strong> El video del DVD WTSDA contiene todas las formas en secuencia. ' +
+        'Por favor <strong style="color:#fff">ver solo la forma de tu rango actual</strong> — no avanzar a formas de rangos superiores sin indicacion del instructor.' +
+      '</div>';
+      for (var v = 0; v < videos.length; v++) {
+        var vid = videos[v];
+        html += '<a class="recurso-link" href="' + vid.url + '" target="_blank">' +
+          '<div class="recurso-icon">' + vid.icon + '</div>' +
+          '<div class="recurso-info">' +
+            '<div class="recurso-title">' + vid.title + '</div>' +
+            '<div class="recurso-desc">' + vid.desc + '</div>' +
+          '</div>' +
+          '<div class="recurso-arrow">&#8250;</div>' +
+        '</a>';
+      }
+      html += '<div style="height:8px"></div>';
+      html += '<div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase">&#128279; Otros recursos</div>';
+    }
   }
 
   // General resources
@@ -1521,271 +1491,6 @@ function renderRecursos(si) {
     '<div class="sec-title">&#128279; RECURSOS Y ENLACES</div>' +
     html +
   '</div>';
-}
-
-
-// ===== RACHA E INSIGNIAS =====
-
-// Calculate training streak from confirmed attendances
-function calcRacha(si) {
-  var myAsist = asistencias.filter(function(a) {
-    return a.estudianteId === si && a.estado === 'confirmada';
-  });
-  if (!myAsist.length) return {current: 0, best: 0};
-
-  // Get unique dates sorted
-  var dates = [];
-  var seen = {};
-  myAsist.forEach(function(a) {
-    if (!seen[a.fecha]) { seen[a.fecha] = true; dates.push(a.fecha); }
-  });
-  dates.sort();
-
-  // Calculate current streak (consecutive weeks with at least 1 class)
-  // For simplicity: consecutive calendar weeks with attendance
-  var current = 1;
-  var best = 1;
-  var temp = 1;
-
-  for (var i = 1; i < dates.length; i++) {
-    var prev = new Date(dates[i-1] + 'T12:00:00');
-    var curr = new Date(dates[i] + 'T12:00:00');
-    var diffDays = Math.round((curr - prev) / (1000 * 60 * 60 * 24));
-    if (diffDays <= 7) {
-      temp++;
-      if (temp > best) best = temp;
-    } else {
-      temp = 1;
-    }
-  }
-  current = temp;
-  return {current: current, best: best, total: dates.length};
-}
-
-// Badge definitions
-var BADGE_DEFS = [
-  // ── ASISTENCIA ──
-  {id:'primera_clase', emoji:'&#129355;', name:'Primera Clase', desc:'Completaste tu primera clase', cat:'asistencia'},
-  {id:'mes1', emoji:'&#128197;', name:'1 Mes Activo', desc:'4 semanas seguidas entrenando', cat:'asistencia'},
-  {id:'mes3', emoji:'&#11088;', name:'3 Meses Activo', desc:'12 semanas en el dojang', cat:'asistencia'},
-  {id:'mes6', emoji:'&#127381;', name:'6 Meses', desc:'Medio año de dedicacion', cat:'asistencia'},
-  {id:'anio1', emoji:'&#127942;', name:'1 Año Activo', desc:'Un año de entrenamiento constante', cat:'asistencia'},
-  {id:'clases10', emoji:'&#128170;', name:'10 Clases', desc:'Completaste 10 clases confirmadas', cat:'asistencia'},
-  {id:'clases25', emoji:'&#128293;', name:'25 Clases', desc:'Completaste 25 clases confirmadas', cat:'asistencia'},
-  {id:'clases50', emoji:'&#9889;', name:'50 Clases', desc:'Completaste 50 clases confirmadas', cat:'asistencia'},
-  // ── PROGRAMAS INFANTILES ──
-  {id:'tiny_tiger', emoji:'&#128047;', name:'Cachorro de Tigre', desc:'Completaste el programa Tiny Tiger (3-5 años)', cat:'programa'},
-  {id:'little_dragon', emoji:'&#129409;', name:'Pequeño Dragon', desc:'Completaste el programa Little Dragons (5-7 años)', cat:'programa'},
-  // ── CINTURONES GUP ──
-  {id:'blanco', emoji:'&#11036;', name:'Cinturon Blanco', desc:'Sip Gup / Ku Gup - 10mo y 9no Gup', cat:'rango'},
-  {id:'naranja', emoji:'&#127280;', name:'Cinturon Naranja', desc:'Pal Gup / Chil Gup - 8vo y 7mo Gup', cat:'rango'},
-  {id:'verde', emoji:'&#129001;', name:'Cinturon Verde', desc:'Yuk Gup / Oh Gup - 6to y 5to Gup', cat:'rango'},
-  {id:'marron', emoji:'&#129521;', name:'Cinturon Marron', desc:'Sah Gup / Sam Gup - 4to y 3er Gup', cat:'rango'},
-  {id:'rojo', emoji:'&#128308;', name:'Cinturon Rojo', desc:'E Gup / IL Gup - 2do y 1er Gup', cat:'rango'},
-  {id:'azul', emoji:'&#128309;', name:'Cho Dan Bo', desc:'Candidato Cinturon Negro - Azul', cat:'rango'},
-  // ── CINTURONES DAN ──
-  {id:'cho_dan', emoji:'&#11035;', name:'Cho Dan - 1er Dan', desc:'Cinturon Negro con 1 rayita blanca', cat:'dan'},
-  {id:'e_dan', emoji:'&#11035;', name:'E Dan - 2do Dan', desc:'Cinturon Negro con 2 rayitas blancas', cat:'dan'},
-  {id:'sam_dan', emoji:'&#11035;', name:'Sam Dan - 3er Dan', desc:'Cinturon Negro con 3 rayitas blancas', cat:'dan'},
-  {id:'sah_dan', emoji:'&#11035;', name:'Sah Dan - 4to Dan', desc:'Cinturon Negro con 4 rayitas - sin escuela', cat:'dan'},
-  {id:'sah_dan_master', emoji:'&#128081;', name:'Sah Dan Master', desc:'Cinturon Negro 4 rayitas - con escuela propia', cat:'dan'},
-  {id:'oh_dan', emoji:'&#128081;', name:'Oh Dan - 5to Dan', desc:'Ko Dan Ja - Senior Master', cat:'dan'},
-  {id:'yuk_dan', emoji:'&#128081;', name:'Yuk Dan - 6to Dan', desc:'Ko Dan Ja - International Master', cat:'dan'},
-  {id:'chil_dan', emoji:'&#128081;', name:'Chil Dan - 7mo Dan', desc:'Ko Dan Ja - International Master', cat:'dan'},
-  {id:'pal_dan', emoji:'&#128081;', name:'Pal Dan - 8vo Dan', desc:'Ko Dan Ja - Assistant Grandmaster', cat:'dan'},
-  {id:'ku_dan', emoji:'&#128081;', name:'Ku Dan - 9no Dan', desc:'Grandmaster', cat:'dan'},
-  // ── ROL ──
-  {id:'instructor', emoji:'&#127979;', name:'Instructor', desc:'Certificado como instructor WTSDA', cat:'rol'},
-  {id:'dueño_escuela', emoji:'&#127968;', name:'Dueño de Escuela', desc:'Dojang registrado en la WTSDA', cat:'rol'},
-  // ── EVENTOS ──
-  {id:'primer_torneo', emoji:'&#127937;', name:'Primer Torneo', desc:'Participaste en tu primer torneo', cat:'evento'},
-  {id:'medalla_oro', emoji:'&#129351;', name:'Medalla de Oro', desc:'Primer lugar en competencia', cat:'evento'},
-  {id:'medalla_plata', emoji:'&#129352;', name:'Medalla de Plata', desc:'Segundo lugar en competencia', cat:'evento'},
-  {id:'medalla_bronce', emoji:'&#129353;', name:'Medalla de Bronce', desc:'Tercer lugar en competencia', cat:'evento'},
-  {id:'clinica', emoji:'&#127891;', name:'Clinica WTSDA', desc:'Participaste en una clinica oficial', cat:'evento'},
-  {id:'campeon_regional', emoji:'&#127885;', name:'Campeon Regional', desc:'Primer lugar a nivel regional', cat:'evento'},
-  {id:'campeon_nacional', emoji:'&#127464;&#127479;', name:'Campeon Nacional', desc:'Primer lugar a nivel nacional', cat:'evento'},
-  {id:'campeon_mundial', emoji:'&#127758;', name:'Campeon Mundial', desc:'Participacion en torneo mundial WTSDA', cat:'evento'},
-  // ── LOGROS ──
-  {id:'primera_eval', emoji:'&#128202;', name:'Primera Evaluacion', desc:'Recibiste tu primera evaluacion del instructor', cat:'logro'},
-  {id:'cinco_estrellas', emoji:'&#127775;', name:'5 Estrellas', desc:'Evaluacion perfecta en alguna categoria', cat:'logro'},
-  {id:'pruebas_fisicas', emoji:'&#127939;', name:'Pruebas Fisicas', desc:'Completaste tu primera medicion fisica', cat:'logro'},
-];
-
-function getBadgeCategories() {
-  return [
-    {id:'asistencia', label:'&#128197; Asistencia y Tiempo'},
-    {id:'programa', label:'&#128047; Programas Infantiles'},
-    {id:'rango', label:'&#129354; Cinturones Gup'},
-    {id:'dan', label:'&#11035; Cinturones Dan'},
-    {id:'rol', label:'&#127979; Rol en el Dojang'},
-    {id:'evento', label:'&#127942; Eventos y Campeonatos'},
-    {id:'logro', label:'&#11088; Logros Personales'},
-  ];
-}
-
-// Check which badges are earned automatically
-function calcBadgesAuto(si) {
-  var s = students[si];
-  var saved = evals[si] || {};
-  var myAsist = asistencias.filter(function(a){ return a.estudianteId===si && a.estado==='confirmada'; });
-  var uniqueDates = {};
-  myAsist.forEach(function(a){ uniqueDates[a.fecha]=true; });
-  var totalClases = Object.keys(uniqueDates).length;
-  var racha = calcRacha(si);
-
-  // Manual badges saved by admin
-  var manual = saved['badges'] || {};
-  var earned = {};
-
-  // Auto-earn based on data
-  if (totalClases >= 1) earned['primera_clase'] = myAsist[0] ? myAsist[0].fecha : '—';
-  if (racha.current >= 4 || totalClases >= 4) earned['mes1'] = '—';
-  if (racha.current >= 12 || totalClases >= 12) earned['mes3'] = '—';
-  if (racha.current >= 24 || totalClases >= 24) earned['mes6'] = '—';
-  if (racha.current >= 48 || totalClases >= 48) earned['anio1'] = '—';
-  if (totalClases >= 10) earned['clases10'] = '—';
-  if (totalClases >= 25) earned['clases25'] = '—';
-  if (totalClases >= 50) earned['clases50'] = '—';
-
-  // Auto badges by current rank — all previous ranks also earned
-  var gup = s.gup;
-  // Tiny Tiger / Little Dragons programs
-  if (gup === 'Tiny Tiger' || gup.indexOf('Pequeño') !== -1) earned['tiny_tiger'] = '—';
-  if (gup.indexOf('Pequeño') !== -1) earned['tiny_tiger'] = '—';
-  // Gup ranks — each rank means all previous earned too
-  var rankOrder = ['9no','8vo','7mo','6to','5to','4to','3er','2do','1er','Cho Dan Bo','Cho Dan','E Dan','Sam Dan','Sah Dan'];
-  var currentRankIdx = -1;
-  for (var ri = 0; ri < rankOrder.length; ri++) {
-    if (gup.indexOf(rankOrder[ri]) !== -1) { currentRankIdx = ri; break; }
-  }
-  if (currentRankIdx >= 0) earned['blanco'] = '—';
-  if (currentRankIdx >= 2) earned['naranja'] = '—';   // 7mo Gup+
-  if (currentRankIdx >= 4) earned['verde'] = '—';     // 5to Gup+
-  if (currentRankIdx >= 6) earned['marron'] = '—';    // 3er Gup+
-  if (currentRankIdx >= 8) earned['rojo'] = '—';      // 1er Gup+
-  if (currentRankIdx >= 9) earned['azul'] = '—';      // Cho Dan Bo+
-  if (currentRankIdx >= 10) earned['cho_dan'] = '—';  // Cho Dan+
-  if (currentRankIdx >= 11) earned['e_dan'] = '—';    // E Dan+
-  if (currentRankIdx >= 12) earned['sam_dan'] = '—';  // Sam Dan+
-  if (gup.indexOf('Sah Dan') !== -1) earned['sah_dan'] = '—';
-  if (gup.indexOf('Sah Dan Master') !== -1) earned['sah_dan_master'] = '—';
-  // Instructor / Dueño auto from gup
-  if (gup.indexOf('Sah Dan') !== -1 || gup.indexOf('Sam Dan') !== -1 || gup.indexOf('E Dan') !== -1) earned['instructor'] = '—';
-  if (gup.indexOf('Sah Dan Master') !== -1) earned['dueño_escuela'] = '—';
-
-  // Eval badges
-  var hasEval = false;
-  var hasFive = false;
-  var cats = ['fis','men','emo'];
-  var items = ['Tecnica','Potencia','Velocidad','Resistencia','Flexibilidad','Concentracion','Memoria motora','Respeto','Humildad','Perseverancia','Motivacion','Confianza','Frustracion','Actitud','Disfrute'];
-  for (var c=0;c<cats.length;c++) {
-    for (var it=0;it<items.length;it++) {
-      var val = saved['e_'+cats[c]+'_'+items[it]];
-      if (val) { hasEval=true; if(val>=5) hasFive=true; }
-    }
-  }
-  if (hasEval) earned['primera_eval']='—';
-  if (hasFive) earned['cinco_estrellas']='—';
-
-  // Physical tests
-  var hasTest = false;
-  var tkeys = ['lagartijas','abdominales','sentadillas','jumping','jungkwon','ahpchaki','yupchaki','tollyo'];
-  for (var tk=0;tk<tkeys.length;tk++) {
-    if (saved['tl_'+tkeys[tk]]) { hasTest=true; break; }
-  }
-  if (hasTest) earned['pruebas_fisicas']='—';
-
-  // Merge with manual badges from admin
-  for (var bid in manual) {
-    if (manual[bid]) earned[bid] = manual[bid];
-  }
-
-  return earned;
-}
-
-function grantBadge(si, badgeId) {
-  if (!evals[si]) evals[si]={};
-  if (!evals[si]['badges']) evals[si]['badges']={};
-  var fecha = new Date().toLocaleDateString('es-CR');
-  evals[si]['badges'][badgeId] = fecha;
-  saveEvals();
-  renderBadgeSection(si);
-  toast('🏅 Insignia otorgada');
-}
-
-function revokeBadge(si, badgeId) {
-  if (evals[si] && evals[si]['badges']) {
-    delete evals[si]['badges'][badgeId];
-    saveEvals();
-    renderBadgeSection(si);
-    toast('Insignia removida');
-  }
-}
-
-function renderBadgeSection(si) {
-  var el = document.getElementById('badge-section-container');
-  if (!el) return;
-  var s = students[si];
-  var racha = calcRacha(si);
-  var earned = calcBadgesAuto(si);
-  var totalEarned = Object.keys(earned).length;
-  var totalBadges = BADGE_DEFS.length;
-
-  // RACHA
-  var rachaHtml = '<div class="racha-box">' +
-    '<div class="racha-icon">&#128293;</div>' +
-    '<div>' +
-      '<div class="racha-num">' + racha.current + '</div>' +
-      '<div class="racha-label">SEMANAS CONSECUTIVAS</div>' +
-      '<div class="racha-best">Mejor racha: ' + racha.best + ' semanas &nbsp;&middot;&nbsp; Total clases: ' + (racha.total||0) + '</div>' +
-    '</div>' +
-  '</div>';
-
-  // EXAM READY
-  var examHtml = '';
-  var meses = s.months || 0;
-  var mesesNeed = s.monthsNeeded || 999;
-  if (meses >= mesesNeed) {
-    examHtml = '<div class="exam-ready-box">' +
-      '<div class="exam-ready-icon">&#127941;</div>' +
-      '<div>' +
-        '<div class="exam-ready-text">Listo para examen de rango</div>' +
-        '<div class="exam-ready-sub">Cumplís el tiempo mínimo para ' + (s.targetGup.indexOf('→')!==-1?s.targetGup.split('→')[1].trim():s.targetGup) + '</div>' +
-      '</div>' +
-    '</div>';
-  }
-
-  // BADGES by category
-  var cats = getBadgeCategories();
-  var badgesHtml = '<div style="font-size:12px;color:#888;margin-bottom:12px">' +
-    totalEarned + ' de ' + totalBadges + ' insignias obtenidas</div>';
-
-  cats.forEach(function(cat) {
-    var catBadges = BADGE_DEFS.filter(function(b){ return b.cat===cat.id; });
-    badgesHtml += '<div class="badge-category">' + cat.label + '</div>';
-    badgesHtml += '<div class="badges-grid">';
-    catBadges.forEach(function(b) {
-      var isEarned = !!earned[b.id];
-      var dateStr = earned[b.id] && earned[b.id]!=='—' ? earned[b.id] : '';
-      var adminControls = adminMode ?
-        (isEarned ?
-          ' <button onclick="revokeBadge('+si+',''+b.id+'')" style="background:none;border:none;color:#555;font-size:9px;cursor:pointer;margin-top:2px">quitar</button>' :
-          '<button onclick="grantBadge('+si+',''+b.id+'')" style="background:rgba(200,16,46,0.15);border:1px solid #C8102E;color:#C8102E;font-size:9px;cursor:pointer;border-radius:4px;padding:2px 6px;margin-top:4px;display:block;width:100%">otorgar</button>'
-        ) : '';
-      badgesHtml += '<div class="badge-item ' + (isEarned?'earned':'locked') + '">' +
-        '<span class="badge-emoji">' + b.emoji + '</span>' +
-        '<div class="badge-name">' + b.name + '</div>' +
-        (isEarned ? '<div class="badge-date">' + (dateStr||'&#10003;') + '</div>' : '<div class="badge-locked-label">&#128274;</div>') +
-        adminControls +
-      '</div>';
-    });
-    badgesHtml += '</div>';
-  });
-
-  el.innerHTML = rachaHtml + examHtml +
-    '<div class="sec-title">&#127941; MIS INSIGNIAS</div>' +
-    badgesHtml;
 }
 
 load();
