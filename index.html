@@ -549,7 +549,7 @@ function saveEvals() {
   if (!window.FB_ENABLED) return;
   window._evalsLocalWrite = true;
   db.collection('config').doc('evals').set({data: JSON.stringify(evals)})
-    .then(function(){ setTimeout(function(){ window._evalsLocalWrite = false; }, 2000); })
+    .then(function(){ setTimeout(function(){ window._evalsLocalWrite = false; }, 3000); })
     .catch(function(e){ window._evalsLocalWrite = false; console.warn('Firebase evals error:', e); });
 }
 function savePagos() {
@@ -1958,18 +1958,28 @@ function grantBadge(si, badgeId) {
   if(!evals[si]['badges']) evals[si]['badges']={};
   var fecha = new Date().toLocaleDateString('es-CR');
   evals[si]['badges'][badgeId] = fecha;
-  saveEvals();
-  if (adminMode) { _renderInsigniasAdminPanel(si); } else { renderInsigniasView(); }
-  toast('\u2605 Insignia otorgada');
+  saveEvalsAndRefresh(si, '\u2605 Insignia otorgada');
 }
 
 function revokeBadge(si, badgeId) {
   if(evals[si] && evals[si]['badges']) {
     delete evals[si]['badges'][badgeId];
-    saveEvals();
-    if (adminMode) { _renderInsigniasAdminPanel(si); } else { renderInsigniasView(); }
-    toast('Insignia removida');
+    saveEvalsAndRefresh(si, 'Insignia removida');
   }
+}
+
+function saveEvalsAndRefresh(si, msg) {
+  // Guardar en localStorage inmediatamente
+  localStorage.setItem('dk_evals', JSON.stringify(evals));
+  // Renderizar de inmediato con datos correctos
+  if (adminMode) { _renderInsigniasAdminPanel(si); } else { renderInsigniasView(); }
+  toast(msg);
+  // Luego sincronizar a Firebase (sin que el onSnapshot interrumpa)
+  if (!window.FB_ENABLED) return;
+  window._evalsLocalWrite = true;
+  db.collection('config').doc('evals').set({data: JSON.stringify(evals)})
+    .then(function(){ setTimeout(function(){ window._evalsLocalWrite = false; }, 3000); })
+    .catch(function(e){ window._evalsLocalWrite = false; console.warn('Firebase evals error:', e); });
 }
 
 function renderBadgeSection(si) {
