@@ -463,6 +463,29 @@ body.admin-mode .admin-only{display:block}
 
 <div class="toast" id="toast"></div>
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+  var firebaseConfig = {
+    apiKey: "AIzaSyDUXoltgzD0azBOBlJkCTqnSG4igJDoVpw",
+    authDomain: "dan-kyul-803.firebaseapp.com",
+    projectId: "dan-kyul-803",
+    storageBucket: "dan-kyul-803.firebasestorage.app",
+    messagingSenderId: "967631595866",
+    appId: "1:967631595866:web:a5ece7e6b8e4e4e4e4e4e4",
+    measurementId: "G-SH1TPC46TN"
+  };
+  try {
+    firebase.initializeApp(firebaseConfig);
+    window.db = firebase.firestore();
+    window.FB_ENABLED = true;
+    console.log("Firebase conectado ✓");
+  } catch(e) {
+    window.FB_ENABLED = false;
+    console.warn("Firebase no disponible:", e);
+  }
+</script>
 <script>
 var BELTS = {
   '10mo Gup': 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSIzMCIgdmlld0JveD0iMCAwIDY0IDMwIj48cmVjdCB4PSIwIiB5PSI5IiB3aWR0aD0iMjUiIGhlaWdodD0iMTIiIHJ4PSIzIiBmaWxsPSIjRjBGMEYwIi8+PHJlY3QgeD0iMzkiIHk9IjkiIHdpZHRoPSIyNSIgaGVpZ2h0PSIxMiIgcng9IjMiIGZpbGw9IiNGMEYwRjAiLz48cmVjdCB4PSIwIiB5PSI5IiB3aWR0aD0iNjQiIGhlaWdodD0iMyIgcng9IjMiIGZpbGw9IndoaXRlIiBvcGFjaXR5PSIwLjEyIi8+PGVsbGlwc2UgY3g9IjMyIiBjeT0iMTUiIHJ4PSI4IiByeT0iOSIgZmlsbD0iI0YwRjBGMCIvPjxlbGxpcHNlIGN4PSIzMiIgY3k9IjE1IiByeD0iNSIgcnk9IjYiIGZpbGw9IiNGMEYwRjAiLz48ZWxsaXBzZSBjeD0iMzIiIGN5PSIxMSIgcng9IjQiIHJ5PSIyIiBmaWxsPSJ3aGl0ZSIgb3BhY2l0eT0iMC4xNSIvPjxlbGxpcHNlIGN4PSIzMiIgY3k9IjE1IiByeD0iOCIgcnk9IjkiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMC42IiBvcGFjaXR5PSIwLjIiLz48bGluZSB4MT0iMjgiIHkxPSIyMiIgeDI9IjE5IiB5Mj0iMzAiIHN0cm9rZT0iI0YwRjBGMCIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMzYiIHkxPSIyMiIgeDI9IjQ1IiB5Mj0iMzAiIHN0cm9rZT0iI0YwRjBGMCIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4=',
@@ -518,13 +541,81 @@ var students = [
 function load() {
   try { evals = JSON.parse(localStorage.getItem('dk_evals') || '{}'); } catch(e){}
   try { pagos = JSON.parse(localStorage.getItem('dk_pagos') || '[]'); } catch(e){}
-  try { eventos = JSON.parse(localStorage.getItem('dk_eventos') || '[]'); } catch(e){}
-  try { asistencias = JSON.parse(localStorage.getItem('dk_asist') || '[]'); } catch(e){}
+  // Eventos, asistencias y clases vienen de Firebase
+  loadFirebaseData();
 }
 function saveEvals() { localStorage.setItem('dk_evals', JSON.stringify(evals)); }
 function savePagos() { localStorage.setItem('dk_pagos', JSON.stringify(pagos)); }
-function saveEventos() { localStorage.setItem('dk_eventos', JSON.stringify(eventos)); }
-function saveAsistencias() { localStorage.setItem('dk_asist', JSON.stringify(asistencias)); }
+
+// ── FIREBASE SYNC ─────────────────────────────────────────────────────────────
+function loadFirebaseData() {
+  if (!FB_ENABLED) return;
+  // Escuchar asistencias en tiempo real
+  db.collection('asistencias').orderBy('id', 'desc').onSnapshot(function(snap) {
+    asistencias = [];
+    snap.forEach(function(doc) { asistencias.push(doc.data()); });
+    // Refrescar vistas que usan asistencias
+    var v = document.querySelector('.view.on');
+    if (v && v.id === 'view-asistencia') renderAsistenciaAdmin();
+    if (v && v.id === 'view-estudiantes') { /* refresh detail if open */ }
+  }, function(err) {
+    console.warn('Firebase asist error, usando localStorage:', err);
+    try { asistencias = JSON.parse(localStorage.getItem('dk_asist') || '[]'); } catch(e){}
+  });
+
+  // Escuchar eventos en tiempo real
+  db.collection('eventos').onSnapshot(function(snap) {
+    eventos = [];
+    snap.forEach(function(doc) { eventos.push(doc.data()); });
+    var v = document.querySelector('.view.on');
+    if (v && v.id === 'view-eventos') renderEventos();
+  }, function(err) {
+    console.warn('Firebase eventos error:', err);
+    try { eventos = JSON.parse(localStorage.getItem('dk_eventos') || '[]'); } catch(e){}
+  });
+
+  // Escuchar clases en tiempo real
+  db.collection('clases').orderBy('fecha', 'desc').onSnapshot(function(snap) {
+    clases = [];
+    snap.forEach(function(doc) { clases.push(doc.data()); });
+    var v = document.querySelector('.view.on');
+    if (v && v.id === 'view-eventos') renderClases();
+  }, function(err) {
+    console.warn('Firebase clases error:', err);
+    try { clases = JSON.parse(localStorage.getItem('dk_clases') || '[]'); } catch(e){}
+  });
+}
+
+function saveAsistencias() {
+  localStorage.setItem('dk_asist', JSON.stringify(asistencias));
+  if (!FB_ENABLED) return;
+  // Sincronizar toda la lista a Firebase
+  var batch = db.batch();
+  // Borrar y reescribir es más simple para este volumen
+  db.collection('asistencias').get().then(function(snap) {
+    var b = db.batch();
+    snap.forEach(function(doc) { b.delete(doc.ref); });
+    asistencias.forEach(function(a) {
+      var ref = db.collection('asistencias').doc(String(a.id));
+      b.set(ref, a);
+    });
+    b.commit().catch(function(e){ console.warn('Firebase save asist error:', e); });
+  });
+}
+
+function saveEventos() {
+  localStorage.setItem('dk_eventos', JSON.stringify(eventos));
+  if (!FB_ENABLED) return;
+  db.collection('eventos').get().then(function(snap) {
+    var b = db.batch();
+    snap.forEach(function(doc) { b.delete(doc.ref); });
+    eventos.forEach(function(ev) {
+      var ref = db.collection('eventos').doc(String(ev.id || Date.now()));
+      b.set(ref, ev);
+    });
+    b.commit().catch(function(e){ console.warn('Firebase save eventos error:', e); });
+  });
+}
 
 // ── TOAST ─────────────────────────────────────────────────────────────────────
 function toast(msg) {
@@ -2315,7 +2406,19 @@ var clases = [];
 function loadClases() {
   try { clases = JSON.parse(localStorage.getItem('dk_clases') || '[]'); } catch(e){}
 }
-function saveClases() { localStorage.setItem('dk_clases', JSON.stringify(clases)); }
+function saveClases() {
+  localStorage.setItem('dk_clases', JSON.stringify(clases));
+  if (!FB_ENABLED) return;
+  db.collection('clases').get().then(function(snap) {
+    var b = db.batch();
+    snap.forEach(function(doc) { b.delete(doc.ref); });
+    clases.forEach(function(c) {
+      var ref = db.collection('clases').doc(String(c.id));
+      b.set(ref, c);
+    });
+    b.commit().catch(function(e){ console.warn('Firebase save clases error:', e); });
+  });
+}
 
 function calShowTab(tab) {
   var tabEvEl = document.getElementById('cal-tab-eventos');
