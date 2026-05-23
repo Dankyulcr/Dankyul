@@ -547,8 +547,10 @@ function load() {
 function saveEvals() {
   localStorage.setItem('dk_evals', JSON.stringify(evals));
   if (!window.FB_ENABLED) return;
+  window._evalsLocalWrite = true;
   db.collection('config').doc('evals').set({data: JSON.stringify(evals)})
-    .catch(function(e){ console.warn('Firebase evals error:', e); });
+    .then(function(){ setTimeout(function(){ window._evalsLocalWrite = false; }, 2000); })
+    .catch(function(e){ window._evalsLocalWrite = false; console.warn('Firebase evals error:', e); });
 }
 function savePagos() {
   localStorage.setItem('dk_pagos', JSON.stringify(pagos));
@@ -587,7 +589,10 @@ function loadFirebaseData() {
   });
 
   // Escuchar evals en tiempo real (insignias instantáneas)
+  var evalsLocalWrite = false;
+  window._evalsLocalWrite = false;
   db.collection('config').doc('evals').onSnapshot(function(doc) {
+    if (window._evalsLocalWrite) return; // ignorar eco de escritura propia
     if (doc.exists && doc.data().data) {
       try {
         evals = JSON.parse(doc.data().data);
@@ -595,11 +600,6 @@ function loadFirebaseData() {
         // Refrescar insignias si está abierta esa vista
         var v = document.querySelector('.view.on');
         if (v && v.id === 'view-insignias') renderInsigniasView();
-        // Refrescar detalle del estudiante si está abierto
-        if (currentStudent !== null) {
-          var detEl = document.getElementById('detail-container');
-          if (detEl && detEl.style.display !== 'none') renderInsigniasView();
-        }
       } catch(e){}
     }
   }, function(err){
@@ -2360,7 +2360,7 @@ function renderInsigniasView() {
         var isEarned = !!earned[b.id];
         var dateStr = (earned[b.id] && earned[b.id] !== '\u2713') ? earned[b.id] : '';
         html += '<div class="badge-item ' + (isEarned?'earned':'locked') + '">' +
-          '<span class="badge-emoji">' + b.emoji + '</span>' +
+          '<span class="badge-emoji">' + getBadgeEmoji(b) + '</span>' +
           '<div class="badge-name">' + b.name + '</div>' +
           (isEarned ? '<div class="badge-date">' + (dateStr||'✓') + '</div>' : '<div class="badge-locked-label">🔒</div>') +
           '</div>';
@@ -2369,6 +2369,47 @@ function renderInsigniasView() {
     });
     el.innerHTML = html;
   }
+}
+
+function getBadgeEmoji(b) {
+  // For belt badges, build the img tag fresh to avoid escaping issues
+  var beltColors = {
+    'blanco': '#CCCCCC', 'naranja': '#FF8C00', 'verde': '#2E8B2E',
+    'marron': '#7B3F00', 'rojo': '#C8102E', 'azul': '#1A5DAD',
+    'cho_dan': '#111111', 'e_dan': '#111111', 'sam_dan': '#111111',
+    'sah_dan': '#111111', 'sah_dan_master': '#111111'
+  };
+  if (beltColors[b.id] !== undefined) {
+    return makeBeltImg(b.id);
+  }
+  return b.emoji;
+}
+
+function makeBeltImg(id) {
+  var colors = {
+    'blanco': {c:'#CCCCCC'}, 'naranja': {c:'#FF8C00'}, 'verde': {c:'#2E8B2E'},
+    'marron': {c:'#7B3F00'}, 'rojo': {c:'#C8102E'}, 'azul': {c:'#1A5DAD'},
+    'cho_dan': {c:'#111111'}, 'e_dan': {c:'#111111',sc:'#FFFFFF',n:2},
+    'sam_dan': {c:'#111111',sc:'#FFFFFF',n:3}, 'sah_dan': {c:'#111111',sc:'#FFFFFF',n:4},
+    'sah_dan_master': {c:'#111111',sc:'#C8102E',stripe:true}
+  };
+  var d = colors[id] || {c:'#888'};
+  var stripes = '';
+  if (d.stripe) {
+    stripes = '<rect x="44" y="23.5" width="44" height="3" fill="' + d.sc + '"/>';
+  } else if (d.n) {
+    for (var i=0;i<d.n;i++) {
+      stripes += '<rect x="' + (62+i*5) + '" y="21" width="3" height="7" rx="1" fill="' + d.sc + '" opacity="0.95"/>';
+    }
+  }
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 48" width="40" height="22">' +
+    '<ellipse cx="28" cy="24" rx="18" ry="14" fill="none" stroke="' + d.c + '" stroke-width="6" stroke-linecap="round"/>' +
+    '<line x1="10" y1="30" x2="2" y2="42" stroke="' + d.c + '" stroke-width="6" stroke-linecap="round"/>' +
+    '<line x1="46" y1="30" x2="54" y2="42" stroke="' + d.c + '" stroke-width="6" stroke-linecap="round"/>' +
+    '<rect x="44" y="21" width="44" height="7" rx="3.5" fill="' + d.c + '"/>' +
+    stripes + '</svg>';
+  var b64 = btoa(svg);
+  return '<img src="data:image/svg+xml;base64,' + b64 + '" style="width:40px;height:22px;vertical-align:middle">';
 }
 
 function toggleInsigniasAdmin(si) {
@@ -2411,7 +2452,7 @@ function _renderInsigniasAdminPanel(si) {
         ? '<button onclick="revokeBadge('+si+',\''+b.id+'\');_renderInsigniasAdminPanel('+si+')" style="background:none;border:1px solid #333;color:#555;font-size:9px;cursor:pointer;border-radius:4px;padding:2px 6px;margin-top:4px;display:block;width:100%">✕ quitar</button>'
         : '<button onclick="grantBadge('+si+',\''+b.id+'\');_renderInsigniasAdminPanel('+si+')" style="background:rgba(200,16,46,0.15);border:1px solid #C8102E;color:#C8102E;font-size:9px;cursor:pointer;border-radius:4px;padding:3px 6px;margin-top:4px;display:block;width:100%">＋ otorgar</button>';
       html += '<div class="badge-item '+(isEarned?'earned':'locked')+'">' +
-        '<span class="badge-emoji">'+b.emoji+'</span>' +
+        '<span class="badge-emoji">'+getBadgeEmoji(b)+'</span>' +
         '<div class="badge-name">'+b.name+'</div>' +
         (isEarned ? '<div class="badge-date">'+(dateStr||'✓')+'</div>' : '<div class="badge-locked-label">🔒</div>') +
         ctrl + '</div>';
