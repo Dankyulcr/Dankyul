@@ -554,9 +554,14 @@ function saveEvals() {
 }
 function savePagos() {
   localStorage.setItem('dk_pagos', JSON.stringify(pagos));
+  // Refrescar tarjeta inmediatamente con datos locales
+  var v = document.querySelector('.view.on');
+  if (v && v.id === 'view-inicio') renderCards();
   if (!window.FB_ENABLED) return;
+  window._pagosLocalWrite = true;
   db.collection('config').doc('pagos').set({data: JSON.stringify(pagos)})
-    .catch(function(e){ console.warn('Firebase pagos error:', e); });
+    .then(function(){ setTimeout(function(){ window._pagosLocalWrite = false; }, 3000); })
+    .catch(function(e){ window._pagosLocalWrite = false; console.warn('Firebase pagos error:', e); });
 }
 
 // ── FIREBASE SYNC ─────────────────────────────────────────────────────────────
@@ -608,14 +613,16 @@ function loadFirebaseData() {
   });
 
   // Escuchar pagos en tiempo real
+  window._pagosLocalWrite = false;
   db.collection('config').doc('pagos').onSnapshot(function(doc) {
+    if (window._pagosLocalWrite) return;
     if (doc.exists && doc.data().data) {
       try {
         pagos = JSON.parse(doc.data().data);
         localStorage.setItem('dk_pagos', doc.data().data);
-        // Refrescar tarjeta de inicio si el estudiante la tiene abierta
         var v = document.querySelector('.view.on');
         if (v && v.id === 'view-inicio') renderCards();
+        if (v && v.id === 'view-pagos') renderPagos();
       } catch(e){}
     }
   }, function(err){
@@ -897,6 +904,59 @@ function getEstadoPago(studentName) {
   };
 }
 
+function renderPagosEstudiante(si) {
+  if (adminMode) return ''; // Admin ve sus propios pagos en la sección de Pagos
+  var s = students[si];
+  var misPagos = pagos.filter(function(p){ return p.estudiante === s.fullName; });
+  if (!misPagos.length) {
+    return '<div class="divider"></div>' +
+      '<div class="sec-title">💰 MIS PAGOS</div>' +
+      '<div style="background:#132035;border-radius:10px;padding:14px;text-align:center;color:#555;font-size:13px">Sin pagos registrados aún.</div>';
+  }
+
+  // Ordenar por fecha más reciente
+  var mesesOrd = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Setiembre','Octubre','Noviembre','Diciembre'];
+  misPagos.sort(function(a,b){
+    return (parseInt(b.anio)*12 + mesesOrd.indexOf(b.mes)) - (parseInt(a.anio)*12 + mesesOrd.indexOf(a.mes));
+  });
+
+  var ep = getEstadoPago(s.fullName);
+  var statusColor = ep.alDia ? '#2ECC71' : '#C8102E';
+  var statusIcon = ep.alDia ? '✅' : '⚠️';
+  var statusLabel = ep.alDia ? 'Al día' : 'Pago pendiente';
+
+  var html = '<div class="divider"></div><div class="sec-title">💰 MIS PAGOS</div>';
+
+  // Tarjeta de estado
+  html += '<div style="background:' + statusColor + '18;border:1px solid ' + statusColor + '44;border-radius:12px;padding:14px;margin-bottom:12px">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' +
+      '<div style="font-size:15px;font-weight:700;color:' + statusColor + '">' + statusIcon + ' ' + statusLabel + '</div>' +
+      '<div style="font-size:10px;color:#555;letter-spacing:1px">MENSUALIDAD</div>' +
+    '</div>' +
+    (ep.ultimoPago ? '<div style="font-size:12px;color:#aaa">Último pago: <strong style="color:#fff">' + ep.ultimoPago + '</strong></div>' : '') +
+    (ep.vencimiento && ep.alDia ? '<div style="font-size:12px;color:#888;margin-top:4px">Próximo vencimiento: ' + ep.vencimiento + '</div>' : '') +
+    (!ep.alDia ? '<div style="font-size:12px;color:#C8102E;margin-top:4px">Contactá al instructor para regularizar tu pago.</div>' : '') +
+  '</div>';
+
+  // Historial de pagos
+  html += '<div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:8px">HISTORIAL</div>';
+  misPagos.forEach(function(p) {
+    var estadoColor = p.estado === 'Pagado' ? '#2ECC71' : '#F0C040';
+    html += '<div style="background:#132035;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">' +
+      '<div>' +
+        '<div style="font-size:13px;font-weight:700;color:#fff">' + p.mes + ' ' + p.anio + '</div>' +
+        '<div style="font-size:11px;color:#888;margin-top:2px">' + (p.fecha ? 'Fecha: ' + p.fecha : '') + (p.notas ? ' · ' + p.notas : '') + '</div>' +
+      '</div>' +
+      '<div style="text-align:right">' +
+        '<div style="font-size:14px;font-weight:700;color:#2ECC71">₡' + parseFloat(p.monto||0).toLocaleString('es-CR') + '</div>' +
+        '<div style="font-size:10px;color:' + estadoColor + ';margin-top:2px">' + (p.estado||'Pagado') + '</div>' +
+      '</div>' +
+    '</div>';
+  });
+
+  return html;
+}
+
 function renderCards() {
   var list = (currentStudentId !== null && !adminMode) ? [currentStudentId] : students.map(function(_,i){return i;});
   var h = '';
@@ -1054,7 +1114,8 @@ function renderDetail(i) {
     '<div class="sec-title">📊 EVALUACIÓN INDIVIDUAL</div>'+evalH+
     (adminMode ? '<button class="save-btn" onclick="saveEval('+i+')">&#128190; Guardar Evaluacion</button>' +
       '<button class="asist-manual-btn" onclick="asistManual('+i+')">&#9995; Registrar asistencia manual de hoy</button>' +
-      '<button class="asist-manual-btn" style="background:#1D6F42;margin-top:6px" onclick="abrirHistorial('+i+')">📖 Ver Historial Marcial</button>' : '') +
+      '<button class="asist-manual-btn" style="background:#1D6F42;margin-top:6px" onclick="abrirHistorial('+i+')">📖 Ver Historial Marcial</button>' +
+      renderPagosEstudiante(i) : '') +
     (!adminMode && currentStudentId === i ?
       '<div class="sync-box" style="margin-top:16px">' +
         '<div class="sync-title">&#128257; Compartir mis datos con el instructor</div>' +
