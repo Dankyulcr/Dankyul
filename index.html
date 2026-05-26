@@ -607,12 +607,21 @@ function loadFirebaseData() {
     try { evals = JSON.parse(localStorage.getItem('dk_evals') || '{}'); } catch(e){}
   });
 
-  // Cargar pagos una vez (solo admin los ve)
-  db.collection('config').doc('pagos').get().then(function(doc) {
+  // Escuchar pagos en tiempo real
+  db.collection('config').doc('pagos').onSnapshot(function(doc) {
     if (doc.exists && doc.data().data) {
-      try { pagos = JSON.parse(doc.data().data); localStorage.setItem('dk_pagos', doc.data().data); } catch(e){}
+      try {
+        pagos = JSON.parse(doc.data().data);
+        localStorage.setItem('dk_pagos', doc.data().data);
+        // Refrescar tarjeta de inicio si el estudiante la tiene abierta
+        var v = document.querySelector('.view.on');
+        if (v && v.id === 'view-inicio') renderCards();
+      } catch(e){}
     }
-  }).catch(function(){});
+  }, function(err){
+    console.warn('Firebase pagos error:', err);
+    try { pagos = JSON.parse(localStorage.getItem('dk_pagos') || '[]'); } catch(e){}
+  });
 
   // Escuchar eventos en tiempo real
   db.collection('eventos').onSnapshot(function(snap) {
@@ -629,8 +638,9 @@ function loadFirebaseData() {
   db.collection('clases').orderBy('fecha', 'desc').onSnapshot(function(snap) {
     clases = [];
     snap.forEach(function(doc) { clases.push(doc.data()); });
-    var v = document.querySelector('.view.on');
-    if (v && v.id === 'view-eventos') renderClases();
+    // Refrescar si la pestaña de clases está visible
+    var panelClases = document.getElementById('cal-panel-clases');
+    if (panelClases && panelClases.style.display !== 'none') renderClases();
   }, function(err) {
     console.warn('Firebase clases error:', err);
     try { clases = JSON.parse(localStorage.getItem('dk_clases') || '[]'); } catch(e){}
@@ -849,6 +859,44 @@ function cerrarSesionAdmin() {
 }
 
 // ── RENDER CARDS ──────────────────────────────────────────────────────────────
+function getEstadoPago(studentName) {
+  // Buscar el pago más reciente del estudiante
+  var misPagos = pagos.filter(function(p){ return p.estudiante === studentName; });
+  if (!misPagos.length) return {alDia: false, ultimoPago: null, vencimiento: null};
+
+  // Ordenar por fecha más reciente
+  misPagos.sort(function(a, b) {
+    var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Setiembre','Octubre','Noviembre','Diciembre'];
+    var ai = meses.indexOf(a.mes) + parseInt(a.anio) * 12;
+    var bi2 = meses.indexOf(b.mes) + parseInt(b.anio) * 12;
+    return bi2 - ai;
+  });
+
+  var ultimo = misPagos[0];
+  var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Setiembre','Octubre','Noviembre','Diciembre'];
+  var mesIdx = meses.indexOf(ultimo.mes);
+  var anio = parseInt(ultimo.anio);
+
+  // Calcular mes de vencimiento (mes siguiente al último pago)
+  var vencMesIdx = (mesIdx + 1) % 12;
+  var vencAnio = mesIdx === 11 ? anio + 1 : anio;
+  var vencimiento = meses[vencMesIdx] + ' ' + vencAnio;
+
+  // Está al día si el último pago cubre el mes actual o el anterior
+  var hoy = new Date();
+  var mesActual = hoy.getMonth(); // 0-based
+  var anioActual = hoy.getFullYear();
+  var pagoMesNum = mesIdx + anio * 12;
+  var actualMesNum = mesActual + anioActual * 12;
+  var alDia = pagoMesNum >= (actualMesNum - 1); // al día si pagó este mes o el anterior
+
+  return {
+    alDia: alDia,
+    ultimoPago: ultimo.mes + ' ' + ultimo.anio + (ultimo.monto ? ' · ₡' + parseInt(ultimo.monto).toLocaleString() : ''),
+    vencimiento: vencimiento
+  };
+}
+
 function renderCards() {
   var list = (currentStudentId !== null && !adminMode) ? [currentStudentId] : students.map(function(_,i){return i;});
   var h = '';
@@ -857,6 +905,24 @@ function renderCards() {
     var pct = Math.min(100, Math.round(s.months/s.monthsNeeded*100));
     var bi = getBelt(s.gup);
     var avatarInner = bi ? '<img src="'+bi+'" style="width:48px;height:26px;object-fit:contain">' : s.emoji;
+
+    // Estado de pago — solo visible para el estudiante, no para admin
+    var pagoHtml = '';
+    if (!adminMode && currentStudentId !== null) {
+      var ep = getEstadoPago(s.fullName);
+      var pagoColor = ep.alDia ? '#2ECC71' : '#C8102E';
+      var pagoIcon = ep.alDia ? '✅' : '⚠️';
+      var pagoLabel = ep.alDia ? 'Al día' : 'Pago pendiente';
+      pagoHtml = '<div style="margin:10px 0 4px;background:' + pagoColor + '18;border:1px solid ' + pagoColor + '44;border-radius:10px;padding:10px 12px">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between">' +
+          '<div style="font-size:13px;font-weight:700;color:' + pagoColor + '">' + pagoIcon + ' ' + pagoLabel + '</div>' +
+          '<div style="font-size:10px;color:#555">MENSUALIDAD</div>' +
+        '</div>' +
+        (ep.ultimoPago ? '<div style="font-size:11px;color:#888;margin-top:4px">Último pago: ' + ep.ultimoPago + '</div>' : '<div style="font-size:11px;color:#888;margin-top:4px">Sin pagos registrados</div>') +
+        (ep.vencimiento && ep.alDia ? '<div style="font-size:11px;color:#555;margin-top:2px">Próximo vencimiento: ' + ep.vencimiento + '</div>' : '') +
+      '</div>';
+    }
+
     h += '<div class="card" onclick="goDetail('+i+')">' +
       '<div class="card-top" style="background:'+s.beltColor+'"></div>' +
       '<div class="card-row">' +
@@ -864,6 +930,7 @@ function renderCards() {
         '<div><div class="card-name">'+s.name+'</div><div class="card-sub">'+s.age+' años · '+s.targetGup+'</div></div>' +
       '</div>' +
       '<div class="belt-tag" style="background:'+s.beltColor+';border:1px solid '+s.beltColor+'44">🥋 '+s.beltName+'</div>' +
+      pagoHtml +
       '<div class="prog-lbl"><span>Progreso de tiempo</span><span>'+pct+'%</span></div>' +
       '<div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%;background:'+s.beltColor+'"></div></div>' +
       '<div class="mini-stats">' +
@@ -2546,7 +2613,6 @@ function guardarClase() {
   var pres   = parseInt(document.getElementById('cl-presentes').value)||0;
   var notas  = document.getElementById('cl-notas').value.trim();
   if (!fecha || !tema) { toast('Fecha y tema son obligatorios'); return; }
-  loadClases();
   clases.push({id:Date.now(), fecha:fecha, tema:tema, tecnicas:tec, presentes:pres, notas:notas});
   clases.sort(function(a,b){ return b.fecha.localeCompare(a.fecha); });
   saveClases();
@@ -2557,7 +2623,7 @@ function guardarClase() {
 }
 
 function renderClases() {
-  loadClases();
+  // No llamar loadClases() — usar la variable global ya sincronizada por Firebase
   var el = document.getElementById('clases-list');
   if (!el) return;
   if (adminMode) { var b=document.getElementById('btn-add-clase'); if(b) b.style.display='block'; }
@@ -2587,7 +2653,6 @@ function renderClases() {
 }
 
 function eliminarClase(id) {
-  loadClases();
   clases = clases.filter(function(c){ return c.id !== id; });
   saveClases();
   renderClases();
