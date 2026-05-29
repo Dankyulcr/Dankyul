@@ -21,6 +21,17 @@ body{background:#0A1424;color:#EDEDF0;font-family:-apple-system,BlinkMacSystemFo
 .view.on{display:block}
 /* CARDS */
 .card:active{transform:scale(0.98)}
+/* COMPACT LIST ROW (iOS) */
+.srow{display:flex;align-items:center;gap:13px;background:#15243C;border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:transform 0.15s,background 0.15s}
+.srow:active{transform:scale(0.98);background:#1A2C48}
+.srow-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid;flex-shrink:0;overflow:hidden}
+.srow-info{flex:1;min-width:0}
+.srow-name{font-size:15px;font-weight:600;color:#fff;letter-spacing:-0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srow-sub{font-size:12px;color:#7A8699;margin-top:1px}
+.srow-prog{width:44px;flex-shrink:0;text-align:right}
+.srow-pct{font-size:13px;font-weight:700;color:#fff}
+.srow-pct-lbl{font-size:9px;color:#7A8699}
+.srow-chev{color:#4A5568;font-size:16px;flex-shrink:0}
 .card{background:#15243C;border:1px solid rgba(255,255,255,0.06);border-radius:18px;padding:18px;margin-bottom:14px;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.2);transition:transform 0.15s ease,box-shadow 0.15s ease}
 .card-top{height:3px;position:absolute;top:0;left:0;right:0;border-radius:12px 12px 0 0}
 .card-row{display:flex;align-items:center;gap:12px;margin-top:4px}
@@ -188,7 +199,18 @@ select option{background:#0D1B2A}
 /* TOAST */
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(40,50,70,0.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:#fff;padding:14px 26px;border-radius:24px;font-size:14px;font-weight:600;opacity:0;transition:all 0.3s cubic-bezier(0.2,0.8,0.2,1);z-index:300;white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.1)}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
-.divider{height:1px;background:#1E3050;margin:16px 0}
+.divider{height:1px;background:rgba(255,255,255,0.06);margin:16px 0}
+/* ACCORDION (iOS collapsible) */
+.acc{background:#15243C;border:1px solid rgba(255,255,255,0.06);border-radius:16px;margin-bottom:10px;overflow:hidden}
+.acc-head{display:flex;align-items:center;gap:10px;padding:15px 16px;cursor:pointer;user-select:none;transition:background 0.15s}
+.acc-head:active{background:rgba(255,255,255,0.03)}
+.acc-icon{font-size:18px;flex-shrink:0}
+.acc-title{flex:1;font-size:14px;font-weight:600;color:#fff;letter-spacing:-0.2px}
+.acc-count{font-size:11px;color:#7A8699;background:rgba(255,255,255,0.06);padding:2px 9px;border-radius:10px;font-weight:600}
+.acc-chev{font-size:13px;color:#7A8699;transition:transform 0.25s ease;flex-shrink:0}
+.acc.open .acc-chev{transform:rotate(90deg)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height 0.3s ease;padding:0 16px}
+.acc.open .acc-body{max-height:6000px;padding:0 16px 14px}
 /* ADMIN ONLY */
 .admin-only{display:none}
 body.admin-mode .admin-only{display:block}
@@ -973,6 +995,26 @@ function renderPagosEstudiante(si) {
 }
 
 function renderCards() {
+  // ── ADMIN: lista compacta estilo iOS ──
+  if (adminMode) {
+    var hdr = '<div style="font-size:13px;color:#7A8699;margin-bottom:14px">' + students.length + ' estudiantes activos</div>';
+    var rows = students.map(function(s, i) {
+      var pct = Math.min(100, Math.round(s.months/s.monthsNeeded*100));
+      var bi = getBelt(s.gup);
+      var av = bi ? '<img src="'+bi+'" style="width:34px;height:19px;object-fit:contain">' : s.emoji;
+      var progDisplay = s.monthsNeeded >= 999 ? '<div class="srow-pct" style="color:#F0C040">★</div><div class="srow-pct-lbl">DAN</div>' : '<div class="srow-pct">'+pct+'%</div><div class="srow-pct-lbl">TIEMPO</div>';
+      return '<div class="srow" onclick="goDetail('+i+')">' +
+        '<div class="srow-avatar" style="background:'+s.beltColor+'22;border-color:'+s.beltColor+'">'+av+'</div>' +
+        '<div class="srow-info"><div class="srow-name">'+s.name+'</div><div class="srow-sub">'+s.beltName+' · '+s.age+' años</div></div>' +
+        '<div class="srow-prog">'+progDisplay+'</div>' +
+        '<span class="srow-chev">›</span>' +
+      '</div>';
+    }).join('');
+    document.getElementById('cards-container').innerHTML = hdr + rows;
+    return;
+  }
+
+  // ── ESTUDIANTE: tarjeta completa de su propio perfil ──
   var list = (currentStudentId !== null && !adminMode) ? [currentStudentId] : students.map(function(_,i){return i;});
   var h = '';
   list.forEach(function(i) {
@@ -1046,6 +1088,20 @@ function goDetail(i) {
   setTimeout(function(){ document.getElementById('detail-container').scrollIntoView({behavior:'smooth'}); tRender(i); renderRecursos(i); }, 100);
 }
 
+// Accordion helper — collapsible section (iOS style)
+function acc(icon, title, count, bodyHtml, openByDefault) {
+  var id = 'acc_' + Math.random().toString(36).slice(2,9);
+  return '<div class="acc' + (openByDefault?' open':'') + '" id="'+id+'">' +
+    '<div class="acc-head" onclick="document.getElementById(\''+id+'\').classList.toggle(\'open\')">' +
+      '<span class="acc-icon">'+icon+'</span>' +
+      '<span class="acc-title">'+title+'</span>' +
+      (count!=null ? '<span class="acc-count">'+count+'</span>' : '') +
+      '<span class="acc-chev">›</span>' +
+    '</div>' +
+    '<div class="acc-body">'+bodyHtml+'</div>' +
+  '</div>';
+}
+
 // ── RENDER DETAIL ─────────────────────────────────────────────────────────────
 function renderDetail(i) {
   var s = students[i];
@@ -1110,23 +1166,19 @@ function renderDetail(i) {
       '<div style="font-size:12px;font-weight:700;color:#C8102E;letter-spacing:1px">🎯 REQUISITOS PARA: '+nextRank+'</div>' +
       '<div style="font-size:11px;color:#aaa;margin-top:3px">Lo que debe demostrar en el próximo examen</div>' +
     '</div>' +
-    '<div class="sec-title">Hyung (Formas)</div>'+formsH+
-    '<div class="sec-title">Técnicas de Mano</div>'+techH+
-    '<div class="sec-title">Patadas</div>'+kicksH+
-    '<div class="sec-title">Sparring & Ho Sin Sul</div>'+sparkH+
-    '<div class="sec-title">Rompimiento</div>'+breakH+
-    '<div class="sec-title">Conocimiento</div>'+knowH+
-    '<div class="divider"></div>' +
-    '<div class="sec-title">📍 PLAN PASO A PASO</div>' +
-    '<p style="font-size:11px;color:#888;margin-bottom:12px">Toca el número para marcar completado</p>' +
-    stepsH +
-    '<div class="divider"></div>' +
-    '<div class="sec-title">🧠 ESTRATEGIA MENTAL Y EMOCIONAL</div>'+mentalH+
-    '<div id="recursos-container"></div>' +
-    '<div class="divider"></div>' +
-    '<div id="test-section-container"></div>' +
-    '<div class="divider"></div>' +
-    '<div class="sec-title">📊 EVALUACIÓN INDIVIDUAL</div>'+evalH+
+    '<div class="sec-title">📋 REQUISITOS DE EXAMEN</div>' +
+    acc('📜', 'Hyung (Formas)', s.forms.length, formsH, false) +
+    acc('✋', 'Técnicas de Mano', s.techniques.length, techH, false) +
+    acc('🦵', 'Patadas', s.kicks.length, kicksH, false) +
+    acc('⚔️', 'Sparring & Ho Sin Sul', s.sparring.length, sparkH, false) +
+    acc('🪵', 'Rompimiento', s.breaking.length, breakH, false) +
+    acc('📚', 'Conocimiento', s.knowledge.length, knowH, false) +
+    '<div class="sec-title">📍 PLAN Y ESTRATEGIA</div>' +
+    acc('📍', 'Plan Paso a Paso', s.steps.length, '<p style="font-size:11px;color:#7A8699;margin-bottom:12px">Toca el número para marcar completado</p>'+stepsH, true) +
+    acc('🧠', 'Estrategia Mental y Emocional', s.mental.length, mentalH, false) +
+    acc('🎬', 'Recursos y Videos WTSDA', null, '<div id="recursos-container"></div>', false) +
+    acc('🏃', 'Pruebas Físicas', null, '<div id="test-section-container"></div>', false) +
+    (adminMode ? '<div class="sec-title">📊 EVALUACIÓN INDIVIDUAL</div>'+evalH : evalH)
     (adminMode ? '<button class="save-btn" onclick="saveEval('+i+')">&#128190; Guardar Evaluacion</button>' +
       '<button class="asist-manual-btn" onclick="asistManual('+i+')">&#9995; Registrar asistencia manual de hoy</button>' +
       '<button class="asist-manual-btn" style="background:#1D6F42;margin-top:6px" onclick="abrirHistorial('+i+')">📖 Ver Historial Marcial</button>' +
