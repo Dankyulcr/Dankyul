@@ -902,7 +902,7 @@ function intentarLoginAdmin() {
     loginAdmin();
   }).catch(function(e) {
     console.warn('Login admin:', e && e.code);
-    err.textContent = (e && e.code === 'auth/unauthorized-domain') ? 'Dominio no autorizado en Firebase.' : 'Correo o contraseña incorrectos.';
+    err.textContent = 'No se pudo entrar. Código: ' + ((e && e.code) || 'desconocido');
   });
 }
 
