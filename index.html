@@ -360,6 +360,7 @@ body.admin-mode .view.admin-only.on{display:block}
     <button class="btn-pdf-all" onclick="exportarPDF()">📄 PDF Resumen</button>
   </div>
   <button class="add-btn" onclick="abrirModal('modal-pago')">+ Registrar Pago</button>
+  <div id="pagos-mes-bar" style="display:flex;gap:8px;margin:12px 0"></div>
   <div class="stats-grid" id="stats-container"></div>
   <div id="pagos-list"></div>
 </div>
@@ -598,9 +599,102 @@ var students = [
 function load() {
   try { evals = JSON.parse(localStorage.getItem('dk_evals') || '{}'); } catch(e){}
   try { pagos = JSON.parse(localStorage.getItem('dk_pagos') || '[]'); } catch(e){}
+  try { rangos = JSON.parse(localStorage.getItem('dk_rangos') || '{}'); applyRangos(); } catch(e){}
   // Eventos, asistencias y clases vienen de Firebase
   loadFirebaseData();
 }
+var rangos = {};
+var RANGOS_ORDEN = ['10mo Gup','9no Gup','8vo Gup','7mo Gup','6to Gup','5to Gup','4to Gup','3er Gup','2do Gup','1er Gup','Cho Dan','E Dan','Sam Dan','Sah Dan Master'];
+var RANGO_INFO = {
+  '10mo Gup':{c:'#DDDDDD',n:'Blanco',e:'⬜',m:3}, '9no Gup':{c:'#DDDDDD',n:'Blanco',e:'⬜'},
+  '8vo Gup':{c:'#FFA500',n:'Naranja',e:'🟠'}, '7mo Gup':{c:'#FFA500',n:'Naranja',e:'🟠',m:9},
+  '6to Gup':{c:'#2ECC71',n:'Verde',e:'🟢'}, '5to Gup':{c:'#2ECC71',n:'Verde',e:'🟢'},
+  '4to Gup':{c:'#8B4513',n:'Marrón',e:'🟤',m:18}, '3er Gup':{c:'#8B4513',n:'Marrón',e:'🟤',m:21},
+  '2do Gup':{c:'#C8102E',n:'Rojo',e:'🔴',m:24}, '1er Gup':{c:'#C8102E',n:'Rojo',e:'🔴'},
+  'Cho Dan':{c:'#111111',n:'Cho Dan (1er Dan)',e:'⬛',m:24}, 'E Dan':{c:'#2C2C8C',n:'E Dan (2do Dan)',e:'💙',m:36},
+  'Sam Dan':{c:'#111111',n:'Sam Dan (3er Dan)',e:'⬛',m:999}, 'Sah Dan Master':{c:'#8B0000',n:'Sah Dan Master (4to Dan)',e:'🔱',m:999}
+};
+var REQ_KEYS = ['forms','techniques','kicks','sparring','breaking','tabla','knowledge','steps','mental'];
+
+function monthsBetween(ds) {
+  var d = new Date(ds + 'T12:00:00'), n = new Date();
+  var m = (n.getFullYear() - d.getFullYear()) * 12 + (n.getMonth() - d.getMonth()) - (n.getDate() < d.getDate() ? 1 : 0);
+  return Math.max(0, m);
+}
+function fmtFecha(ds) { var p = ds.split('-'); return parseInt(p[2]) + '/' + parseInt(p[1]) + '/' + p[0]; }
+function applyRangos() {
+  Object.keys(rangos).forEach(function(id) {
+    var s = students[parseInt(id)], r = rangos[id];
+    if (!s || !r || !r.f) return;
+    Object.keys(r.f).forEach(function(k) { s[k] = r.f[k]; });
+    if (s.examDate) s.months = monthsBetween(s.examDate);
+  });
+}
+function saveRangos() {
+  var txt = JSON.stringify(rangos);
+  localStorage.setItem('dk_rangos', txt);
+  if (!window.FB_ENABLED) return;
+  window._rangosLocalWrite = true;
+  db.collection('config').doc('rangos').set({data: txt})
+    .then(function(){ setTimeout(function(){ window._rangosLocalWrite = false; }, 3000); })
+    .catch(function(e){ window._rangosLocalWrite = false; console.warn('Firebase rangos error:', e); toast('No se pudo guardar en Firebase'); });
+}
+function contarClasesDesdeExamen(i) {
+  var ex = students[i].examDate;
+  return asistencias.filter(function(a){ return a.estudianteId === i && a.estado === 'confirmada' && (!ex || a.fecha >= ex); }).length;
+}
+function examBlock(i) {
+  var s = students[i], ex = s.examDate, k = RANGOS_ORDEN.indexOf(s.gup);
+  var h = '<div style="background:#181A20;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#9AA3B2;line-height:1.8">' +
+    '<div>📅 Último examen: <b style="color:#fff">' + (ex ? fmtFecha(ex) : 'sin registrar') + '</b></div>' +
+    '<div>🥋 ' + (ex ? 'Clases desde el último examen' : 'Clases confirmadas registradas') + ': <b style="color:#fff">' + contarClasesDesdeExamen(i) + '</b></div>';
+  if (adminMode && k >= 0 && k < RANGOS_ORDEN.length - 1)
+    h += '<button onclick="abrirPromocion(' + i + ')" style="margin-top:8px;width:100%;padding:12px;border:none;border-radius:10px;background:#C8102E;color:#fff;font-size:14px;font-weight:600">⬆ Promover a ' + RANGOS_ORDEN[k + 1] + '</button>';
+  return h + '</div>';
+}
+function abrirPromocion(i) {
+  var s = students[i], nxt = RANGOS_ORDEN[RANGOS_ORDEN.indexOf(s.gup) + 1], inf = RANGO_INFO[nxt];
+  var hoy = new Date().toISOString().split('T')[0];
+  var st = 'width:100%;padding:12px;margin:4px 0 12px;border-radius:10px;border:1px solid #333;background:#0C0E12;color:#fff;font-size:16px';
+  var o = document.createElement('div');
+  o.id = 'promo-overlay';
+  o.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px';
+  o.innerHTML = '<div style="background:#181A20;border-radius:16px;padding:20px;width:100%;max-width:380px;color:#fff">' +
+    '<div style="font-size:18px;font-weight:700;margin-bottom:4px">Promover a ' + s.name + '</div>' +
+    '<div style="font-size:13px;color:#9AA3B2;margin-bottom:14px">' + s.gup + ' → ' + nxt + ' (cinta ' + inf.n.toLowerCase() + ')</div>' +
+    '<label style="font-size:11px;color:#9AA3B2;letter-spacing:1px">FECHA DEL EXAMEN</label><input id="promo-fecha" type="date" value="' + hoy + '" style="' + st + '">' +
+    '<label style="font-size:11px;color:#9AA3B2;letter-spacing:1px">MESES NECESARIOS PARA EL PRÓXIMO EXAMEN</label><input id="promo-meses" type="number" min="1" value="' + (inf.m || '') + '" style="' + st + '">' +
+    '<div style="display:flex;gap:10px"><button onclick="document.getElementById(\'promo-overlay\').remove()" style="flex:1;padding:13px;border:none;border-radius:10px;background:#262931;color:#fff;font-size:15px">Cancelar</button>' +
+    '<button onclick="confirmarPromocion(' + i + ')" style="flex:1;padding:13px;border:none;border-radius:10px;background:#C8102E;color:#fff;font-size:15px;font-weight:600">Promover</button></div></div>';
+  document.body.appendChild(o);
+}
+function confirmarPromocion(i) {
+  var s = students[i], k = RANGOS_ORDEN.indexOf(s.gup), nxt = RANGOS_ORDEN[k + 1], inf = RANGO_INFO[nxt];
+  var fecha = document.getElementById('promo-fecha').value, meses = parseInt(document.getElementById('promo-meses').value);
+  if (!fecha || !meses) { toast('Poné la fecha y los meses'); return; }
+  var after = RANGOS_ORDEN[k + 2];
+  var f = {
+    gup: nxt, beltColor: inf.c, beltName: inf.n, emoji: inf.e, examDate: fecha, monthsNeeded: meses, months: 0,
+    targetGup: (!after || nxt === 'Sam Dan') ? nxt : nxt + ' → ' + (after.indexOf('Dan') !== -1 ? RANGO_INFO[after].n : after)
+  };
+  // Requisitos: se copian de otro estudiante que ya esté en ese mismo rango; si no hay, quedan vacíos
+  var tpl = students.filter(function(o, j){ return j !== i && o.gup === f.gup && o.targetGup === f.targetGup; })[0];
+  REQ_KEYS.forEach(function(key) {
+    var v = tpl ? tpl[key] : s[key];
+    if (tpl) f[key] = JSON.parse(JSON.stringify(v === undefined ? [] : v));
+    else f[key] = Array.isArray(s[key]) ? [] : (typeof s[key] === 'string' ? '' : s[key]);
+  });
+  var prev = (rangos[i] && rangos[i].hist) || [];
+  prev.push({fecha: fecha, de: s.gup, a: nxt});
+  rangos[i] = {f: f, hist: prev};
+  // Reiniciar avance del examen (pasos, estrellas, notas); las insignias se conservan
+  if (evals[i]) Object.keys(evals[i]).forEach(function(key){ if (/^(s\d+|e_.*|n_.*)$/.test(key)) delete evals[i][key]; });
+  applyRangos(); saveRangos(); saveEvals();
+  document.getElementById('promo-overlay').remove();
+  toast('✓ ' + s.name + ' promovido a ' + nxt + (tpl ? '' : ' (sin requisitos cargados)'));
+  renderDetail(i); renderCards();
+}
+
 function saveEvals() {
   localStorage.setItem('dk_evals', JSON.stringify(evals));
   if (!window.FB_ENABLED) return;
@@ -649,6 +743,19 @@ function loadFirebaseData() {
     console.warn('Firebase asist error, usando localStorage:', err);
     try { asistencias = JSON.parse(localStorage.getItem('dk_asist') || '[]'); } catch(e){}
   });
+
+  // Escuchar promociones de rango en tiempo real
+  db.collection('config').doc('rangos').onSnapshot(function(doc) {
+    if (window._rangosLocalWrite) return;
+    if (doc.exists && doc.data().data) {
+      try {
+        rangos = JSON.parse(doc.data().data);
+        localStorage.setItem('dk_rangos', doc.data().data);
+        applyRangos();
+        if (document.getElementById('cards-container')) renderCards();
+      } catch(e){}
+    }
+  }, function(err){ console.warn('Firebase rangos error:', err); });
 
   // Escuchar evals en tiempo real (insignias instantáneas)
   var evalsLocalWrite = false;
@@ -1212,7 +1319,7 @@ function renderDetail(i) {
       '<div><div class="det-name">'+s.name.toUpperCase()+'</div><div class="det-sub">'+s.age+' años · '+s.gup+'</div></div>' +
     '</div>' +
     '<div class="alert-box '+alertClass+'">'+s.alert+'</div>' +
-    pagoH + asistBtn +
+    examBlock(i) + pagoH + asistBtn +
     '<div style="background:rgba(200,16,46,0.06);border:1px solid rgba(200,16,46,0.2);border-radius:10px;padding:12px 14px;margin-bottom:14px">' +
       '<div style="font-size:12px;font-weight:700;color:#C8102E;letter-spacing:1px">🎯 REQUISITOS PARA: '+nextRank+'</div>' +
       '<div style="font-size:11px;color:#aaa;margin-top:3px">Lo que debe demostrar en el próximo examen</div>' +
@@ -1433,9 +1540,22 @@ function eliminarEvento(id) {
 
 // ── PAGOS ─────────────────────────────────────────────────────────────────────
 var pagoFiltro = 'todos'; // todos | pagaron | pendientes
+var pagoMesSel = null, pagoAnioSel = null;
+function cambiarMesPagos() {
+  pagoMesSel = parseInt(document.getElementById('pg-mes').value);
+  pagoAnioSel = parseInt(document.getElementById('pg-anio').value);
+  renderPagos();
+}
 function renderPagos() {
-  var mes = MESES[new Date().getMonth()];
-  var anio = new Date().getFullYear();
+  var mes = MESES[pagoMesSel !== null ? pagoMesSel : new Date().getMonth()];
+  var anio = pagoAnioSel !== null ? pagoAnioSel : new Date().getFullYear();
+  var anios = {}; anios[new Date().getFullYear()] = 1;
+  pagos.forEach(function(p){ if (p.anio) anios[parseInt(p.anio)] = 1; });
+  var anioList = Object.keys(anios).map(Number).sort(function(a,b){ return b-a; });
+  var selSt = 'flex:1;padding:12px;border-radius:12px;border:1px solid #333;background:#181A20;color:#fff;font-size:15px';
+  document.getElementById('pagos-mes-bar').innerHTML =
+    '<select id="pg-mes" onchange="cambiarMesPagos()" style="'+selSt+'">' + MESES.map(function(m,k){ return '<option value="'+k+'"'+(m===mes?' selected':'')+'>'+m+'</option>'; }).join('') + '</select>' +
+    '<select id="pg-anio" onchange="cambiarMesPagos()" style="'+selSt+';flex:0 0 100px">' + anioList.map(function(a){ return '<option value="'+a+'"'+(a===anio?' selected':'')+'>'+a+'</option>'; }).join('') + '</select>';
   var esMes = pagos.filter(function(p){ return p.mes===mes && parseInt(p.anio)===anio; });
   var pagadosMes = esMes.filter(function(p){ return p.estado==='Pagado'; });
   var pagados = pagadosMes.length;
@@ -1449,7 +1569,7 @@ function renderPagos() {
   document.getElementById('stats-container').innerHTML =
     '<div class="stat-box" style="cursor:pointer;'+activeStyle('pagaron')+'" onclick="filtrarPagos(\'pagaron\')"><div class="stat-val" style="color:#2ECC71">'+pagados+'</div><div class="stat-lbl">PAGARON '+mes.toUpperCase()+'</div></div>' +
     '<div class="stat-box" style="cursor:pointer;'+activeStyle('pendientes')+'" onclick="filtrarPagos(\'pendientes\')"><div class="stat-val" style="color:#E74C3C">'+pendientesList.length+'</div><div class="stat-lbl">PENDIENTES</div></div>' +
-    '<div class="stat-box" style="cursor:pointer;'+activeStyle('todos')+'" onclick="filtrarPagos(\'todos\')"><div class="stat-val" style="color:#F0C040">'+pagos.length+'</div><div class="stat-lbl">TOTAL PAGOS</div></div>' +
+    '<div class="stat-box" style="cursor:pointer;'+activeStyle('todos')+'" onclick="filtrarPagos(\'todos\')"><div class="stat-val" style="color:#F0C040">'+esMes.length+'</div><div class="stat-lbl">TOTAL PAGOS</div></div>' +
     '<div class="stat-box"><div class="stat-val" style="color:#3498DB;font-size:20px">₡'+total.toLocaleString('es-CR')+'</div><div class="stat-lbl">RECAUDADO</div></div>';
 
   var listEl = document.getElementById('pagos-list');
@@ -1468,14 +1588,14 @@ function renderPagos() {
   }
 
   // pagaron o todos
-  var lista = pagos.slice();
+  var lista = esMes.slice();
   if (pagoFiltro === 'pagaron') {
     lista = pagadosMes.slice();
   }
   var pRev = lista.slice().reverse();
   var titulo = pagoFiltro === 'pagaron'
     ? '<div style="font-size:12px;color:#2ECC71;font-weight:700;letter-spacing:1px;margin-bottom:10px">✅ PAGARON '+mes.toUpperCase()+' '+anio+'</div>'
-    : '';
+    : '<div style="font-size:12px;color:#F0C040;font-weight:700;letter-spacing:1px;margin-bottom:10px">📋 REGISTROS DE '+mes.toUpperCase()+' '+anio+'</div>';
   listEl.innerHTML = titulo + (pRev.length ? pRev.map(function(p) {
     var realIdx = pagos.indexOf(p);
     var bc = p.estado==='Pagado'?'badge-ok':p.estado==='Pendiente'?'badge-pend':'badge-parc';
