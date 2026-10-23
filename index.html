@@ -1282,7 +1282,6 @@ function renderCards() {
       '<div class="mini-stats">' +
         '<div class="mini-stat"><div class="mini-val">'+s.months+'</div><div class="mini-lbl">MESES</div></div>' +
         '<div class="mini-stat"><div class="mini-val">'+s.age+'</div><div class="mini-lbl">EDAD</div></div>' +
-        '<div class="mini-stat"><div class="mini-val">'+s.steps.length+'</div><div class="mini-lbl">PASOS</div></div>' +
       '</div></div>';
   });
   document.getElementById('cards-container').innerHTML = h;
@@ -1429,7 +1428,6 @@ function renderDetail(i) {
     acc('🪵', 'Rompimiento', s.breaking.length, breakH, false) +
     acc('📚', 'Conocimiento', s.knowledge.length, knowH, false) +
     '<div class="sec-title">📍 PLAN Y ESTRATEGIA</div>' +
-    acc('📍', 'Plan Paso a Paso', s.steps.length, '<p style="font-size:11px;color:#7A8699;margin-bottom:12px">Toca el número para marcar completado</p>'+stepsH, true) +
     acc('🧠', 'Estrategia Mental y Emocional', s.mental.length, mentalH, false) +
     acc('🎬', 'Recursos y Videos WTSDA', null, '<div id="recursos-container"></div>', false) +
     acc('🏃', 'Pruebas Físicas', null, '<div id="test-section-container"></div>', false) +
@@ -1606,10 +1604,9 @@ function cumpleEventos() {
     if (isInactivo(i) || !s.dob) return;
     var mk = function(yy) {
       return {id: 'bd-' + i + '-' + yy, cumple: true, titulo: '🎂 Cumpleaños de ' + s.name,
-        fecha: yy + '-' + ('0' + s.dob.m).slice(-2) + '-' + ('0' + s.dob.d).slice(-2), desc: 'Cumple ' + (yy - s.dob.y) + ' años'};
+        fecha: yy + '-' + ('0' + s.dob.m).slice(-2) + '-' + ('0' + s.dob.d).slice(-2)};
     };
-    var e = mk(y); out.push(e);
-    if (e.fecha < hoy) out.push(mk(y + 1));
+    out.push(mk(y));
   });
   return out;
 }
@@ -2709,7 +2706,7 @@ function renderResultados() {
 
   html += '<p style="font-size:12px;color:#888;margin-bottom:16px">Toca el nombre de cada estudiante para ver sus mediciones.</p>';
 
-  students.forEach(function(s, si) {
+  ordenEstudiantes().forEach(function(si) { var s = students[si];
     var saved = evals[si] || {};
     var keys = Object.keys(TNAMES_ALL);
     var hasData = false;
@@ -2942,7 +2939,7 @@ function renderInsigniasView() {
     // ── ADMIN: lista de todos los estudiantes con controles de otorgar/quitar ──
     var html = '<div class="sec-title">🏅 INSIGNIAS POR ESTUDIANTE</div>' +
       '<div style="font-size:12px;color:#888;margin-bottom:14px;line-height:1.6">Toca un estudiante para ver y gestionar sus insignias. Los íconos 🔒 son insignias no ganadas — podés otorgarlas manualmente.</div>';
-    students.forEach(function(s, idx) {
+    ordenEstudiantes().forEach(function(idx) { var s = students[idx];
       var earned = calcBadgesAuto(idx);
       var total = Object.keys(earned).length;
       var bi = getBelt(s.gup);
