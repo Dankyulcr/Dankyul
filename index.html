@@ -393,6 +393,7 @@ body.admin-mode .view.admin-only.on{display:block}
 
 <!-- VIEW: ASISTENCIA (admin) -->
 <div class="view admin-only" id="view-asistencia">
+  <div id="asist-mes-bar" style="display:flex;gap:8px;margin-bottom:12px"></div>
   <div id="asist-dashboard" class="stats-grid" style="margin-bottom:16px"></div>
   <div style="font-size:11px;color:#F0C040;font-weight:700;letter-spacing:1.5px;margin-bottom:12px">⏳ PENDIENTES DE CONFIRMACIÓN</div>
   <div id="asist-pending-list"></div>
@@ -594,25 +595,29 @@ var students = [
   {id:13,name:'Laura',pin:'2803',dob:{d:28,m:3,y:1985},fullName:'Laura Bibiana Bustamante Sauma',age:40,gender:'mujer',gup:'Sam Dan',beltColor:'#111111',beltName:'Sam Dan (3er Dan)',emoji:'🖤',targetGup:'Sam Dan',months:168,monthsNeeded:999,alertType:'ok',alert:'Sam Dan (3er Dan), 40 años. Directora de Cariari Tang Soo Do (C252). Afiliada WTSDA bajo su propio estudio. Último examen: 2011.',forms:['Todas las formas Gup y Dan hasta Sam Dan'],techniques:['Dominio completo de técnicas hasta Sam Dan'],kicks:['Todas las patadas avanzadas'],sparring:['Il Soo Sik: 1–30','Sam Soo Sik','Ja Yu Dae Ryun'],breaking:['Multi-target a criterio'],knowledge:['Historia y filosofía Tang Soo Do','Terminología avanzada','Administración de Dojang'],steps:[{t:'Liderazgo de su escuela',d:'Directora y maestra principal de Cariari Tang Soo Do.',tag:'Maestra'},{t:'Mentoría Dan menores',d:'Guiar el desarrollo de cinturones negros bajo su dirección.',tag:'Mentoría'}],mental:[{t:'Legado y visión de su dojang',d:'Plan estratégico de crecimiento de Cariari Tang Soo Do.'},{t:'Conexión con la WTSDA',d:'Participación activa en la comunidad regional.'}]},
   {id:14,name:'Minor',pin:'2209',dob:{d:22,m:9,y:2002},fullName:'Minor Reyes Ugarte',age:23,gender:'hombre',gup:'Cho Dan',beltColor:'#111111',beltName:'Cho Dan (1er Dan)',emoji:'🖤',targetGup:'Cho Dan → E Dan (2do Dan)',months:135,monthsNeeded:24,alertType:'ok',alert:'Cho Dan (1er Dan), 23 años. Mínimo 2 años desde examen Cho Dan para probar E Dan. Ensayo 2,000+ palabras. Énfasis en enseñanza formal y liderazgo demostrado.',forms:['Todas las formas Gup','5 Pyung Ahn','Bassai','Naihanchi Cho Dan','Bong Hyung Il Bu y E Bu','Sip Soo','→ Naihanchi E Dan','→ Bong Hyung Sam Bu'],techniques:['Dominio completo de técnicas','Doble acción','Combinaciones múltiples'],kicks:['Todas las avanzadas con brinco','Combinaciones en salto'],sparring:['Il Soo Sik: 1–30','E Soo Sik y Sam Soo Sik','Ja Yu Dae Ryun: 1 vs 2 obligatorio','Ho Sin Sul: 1–30 + armas','Caídas y rodadas avanzadas'],breaking:['Multi-target mano y patada','A criterio de examinadores'],knowledge:['Ensayo 2,000+ palabras','Historia y filosofía completa','Terminología coreano↔español sin hesitación','Capacidad de enseñar clase completa','Organizar demostraciones','Motivación y psicología de clase'],steps:[{t:'Mes 1–2: Consolidar todas las formas Cho Dan',d:'Máxima expresión marcial. Video análisis comparativo.',tag:'Hyung'},{t:'Mes 3–4: Naihanchi E Dan y Bong Hyung Sam Bu',d:'Formas nuevas del E Dan. Análisis profundo.',tag:'Hyung E Dan'},{t:'Mes 5–6: Il Soo Sik 1–30 y Ho Sin Sul completo',d:'Todas las técnicas + defensa contra cuchillo y armas.',tag:'Sparring'},{t:'Mes 7–8: Ja Yu Dae Ryun 1 vs 2',d:'Sparring múltiple con control. Técnicas de brinco y combinaciones.',tag:'Combate'},{t:'Mes 9–10: Rompimiento multi-target',d:'Mano y patada en configuraciones múltiples.',tag:'Kyuck Pa'},{t:'Mes 11–12: Ensayo y conducción de clases',d:'Ensayo 2,000+ palabras. Dirigir clases formales regularmente.',tag:'Instructor'}],mental:[{t:'Ensayo de promoción E Dan',d:'2,000+ palabras. Reflexión sobre el significado de avanzar al 2do Dan.'},{t:'Registro de clases impartidas',d:'Documentar cada clase que conduce. Requerido para el examen.'},{t:'Desarrollo de estilo de instrucción',d:'¿Cómo enseña Minor? Identificar fortalezas y áreas de mejora pedagógica.'},{t:'Conexión filosófica',d:'Profundizar en filosofía Tang Soo Do más allá de la técnica física.'}]}
 ];
+var BASE_N = students.length;
+var estData = {inactivos:{}, nuevos:[]};
 
 // ── STORAGE ──────────────────────────────────────────────────────────────────
 function load() {
   try { evals = JSON.parse(localStorage.getItem('dk_evals') || '{}'); } catch(e){}
   try { pagos = JSON.parse(localStorage.getItem('dk_pagos') || '[]'); } catch(e){}
+  try { estData = JSON.parse(localStorage.getItem('dk_est') || '{"inactivos":{},"nuevos":[]}'); applyEst(); } catch(e){}
   try { rangos = JSON.parse(localStorage.getItem('dk_rangos') || '{}'); applyRangos(); } catch(e){}
   // Eventos, asistencias y clases vienen de Firebase
   loadFirebaseData();
 }
 var rangos = {};
-var RANGOS_ORDEN = ['10mo Gup','9no Gup','8vo Gup','7mo Gup','6to Gup','5to Gup','4to Gup','3er Gup','2do Gup','1er Gup','Cho Dan','E Dan','Sam Dan','Sah Dan Master'];
+var RANGOS_ORDEN = ['10mo Gup','9no Gup','8vo Gup','7mo Gup','6to Gup','5to Gup','4to Gup','3er Gup','2do Gup','1er Gup','Cho Dan Bo','Cho Dan','E Dan','Sam Dan','Sah Dan','Sah Dan Master'];
 var RANGO_INFO = {
   '10mo Gup':{c:'#DDDDDD',n:'Blanco',e:'⬜',m:3}, '9no Gup':{c:'#DDDDDD',n:'Blanco',e:'⬜'},
   '8vo Gup':{c:'#FFA500',n:'Naranja',e:'🟠'}, '7mo Gup':{c:'#FFA500',n:'Naranja',e:'🟠',m:9},
   '6to Gup':{c:'#2ECC71',n:'Verde',e:'🟢'}, '5to Gup':{c:'#2ECC71',n:'Verde',e:'🟢'},
   '4to Gup':{c:'#8B4513',n:'Marrón',e:'🟤',m:18}, '3er Gup':{c:'#8B4513',n:'Marrón',e:'🟤',m:21},
   '2do Gup':{c:'#C8102E',n:'Rojo',e:'🔴',m:24}, '1er Gup':{c:'#C8102E',n:'Rojo',e:'🔴'},
+  'Cho Dan Bo':{c:'#1a3a6b',n:'Cho Dan Bo (Azul)',e:'🔵'},
   'Cho Dan':{c:'#111111',n:'Cho Dan (1er Dan)',e:'⬛',m:24}, 'E Dan':{c:'#2C2C8C',n:'E Dan (2do Dan)',e:'💙',m:36},
-  'Sam Dan':{c:'#111111',n:'Sam Dan (3er Dan)',e:'⬛',m:999}, 'Sah Dan Master':{c:'#8B0000',n:'Sah Dan Master (4to Dan)',e:'🔱',m:999}
+  'Sam Dan':{c:'#111111',n:'Sam Dan (3er Dan)',e:'⬛',m:999}, 'Sah Dan':{c:'#8B0000',n:'Sah Dan (4to Dan)',e:'🔱'}, 'Sah Dan Master':{c:'#8B0000',n:'Sah Dan Master (4to Dan)',e:'🔱',m:999}
 };
 var REQ_KEYS = ['forms','techniques','kicks','sparring','breaking','tabla','knowledge','steps','mental'];
 
@@ -647,7 +652,8 @@ function examBlock(i) {
   var s = students[i], ex = s.examDate, k = RANGOS_ORDEN.indexOf(s.gup);
   var h = '<div style="background:#181A20;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#9AA3B2;line-height:1.8">' +
     '<div>📅 Último examen: <b style="color:#fff">' + (ex ? fmtFecha(ex) : 'sin registrar') + '</b></div>' +
-    '<div>🥋 ' + (ex ? 'Clases desde el último examen' : 'Clases confirmadas registradas') + ': <b style="color:#fff">' + contarClasesDesdeExamen(i) + '</b></div>';
+    '<div>🥋 ' + (ex ? 'Clases desde el último examen' : 'Clases confirmadas registradas') + ': <b style="color:#fff">' + contarClasesDesdeExamen(i) + '</b></div>' + (isInactivo(i) ? '<div style="color:#E74C3C">⏸ Estudiante inactivo</div>' : '');
+  if (adminMode) h += '<button onclick="toggleActivo(' + i + ',event);renderDetail(' + i + ')" style="margin-top:8px;width:100%;padding:12px;border:none;border-radius:10px;background:#262931;color:#fff;font-size:14px">' + (isInactivo(i) ? '▶ Activar estudiante' : '⏸ Desactivar estudiante') + '</button>';
   if (adminMode && k >= 0 && k < RANGOS_ORDEN.length - 1)
     h += '<button onclick="abrirPromocion(' + i + ')" style="margin-top:8px;width:100%;padding:12px;border:none;border-radius:10px;background:#C8102E;color:#fff;font-size:14px;font-weight:600">⬆ Promover a ' + RANGOS_ORDEN[k + 1] + '</button>';
   return h + '</div>';
@@ -693,6 +699,81 @@ function confirmarPromocion(i) {
   document.getElementById('promo-overlay').remove();
   toast('✓ ' + s.name + ' promovido a ' + nxt + (tpl ? '' : ' (sin requisitos cargados)'));
   renderDetail(i); renderCards();
+}
+
+function isInactivo(i) { return !!(estData.inactivos && estData.inactivos[i]); }
+function gr(i) { return isInactivo(i) ? 'opacity:.4;filter:grayscale(1);' : ''; }
+function grNombre(nombre) {
+  var j = -1; students.forEach(function(s, k){ if (s.fullName === nombre) j = k; });
+  return j >= 0 ? gr(j) : '';
+}
+function calcEdad(d) {
+  var n = new Date(), a = n.getFullYear() - d.y;
+  if (n.getMonth() + 1 < d.m || (n.getMonth() + 1 === d.m && n.getDate() < d.d)) a--;
+  return a;
+}
+function applyEst() {
+  students.length = BASE_N;
+  (estData.nuevos || []).forEach(function(n) {
+    var c = JSON.parse(JSON.stringify(n)); c.age = calcEdad(c.dob); students.push(c);
+  });
+}
+function saveEst() {
+  var txt = JSON.stringify(estData);
+  localStorage.setItem('dk_est', txt);
+  if (!window.FB_ENABLED) return;
+  window._estLocalWrite = true;
+  db.collection('config').doc('estudiantes').set({data: txt})
+    .then(function(){ setTimeout(function(){ window._estLocalWrite = false; }, 3000); })
+    .catch(function(e){ window._estLocalWrite = false; console.warn('Firebase estudiantes error:', e); toast('No se pudo guardar en Firebase'); });
+}
+function toggleActivo(i, ev) {
+  if (ev) ev.stopPropagation();
+  if (isInactivo(i)) delete estData.inactivos[i]; else estData.inactivos[i] = true;
+  saveEst(); renderCards();
+  toast(students[i].name + (isInactivo(i) ? ' desactivado' : ' activado'));
+}
+var _neSt = 'width:100%;padding:12px;margin:4px 0 10px;border-radius:10px;border:1px solid #333;background:#0C0E12;color:#fff;font-size:16px';
+function _neF(l, h) { return '<label style="font-size:11px;color:#9AA3B2;letter-spacing:1px">' + l + '</label>' + h; }
+function abrirNuevoEstudiante() {
+  var o = document.createElement('div');
+  o.id = 'ne-overlay';
+  o.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px';
+  var ranks = RANGOS_ORDEN.map(function(r){ return '<option>' + r + '</option>'; }).join('');
+  o.innerHTML = '<div style="background:#181A20;border-radius:16px;padding:20px;width:100%;max-width:380px;max-height:92vh;overflow:auto;color:#fff">' +
+    '<div style="font-size:18px;font-weight:700;margin-bottom:12px">Agregar estudiante</div>' +
+    _neF('NOMBRE CORTO', '<input id="ne-name" placeholder="Ej: Ana Larissa" style="' + _neSt + '">') +
+    _neF('NOMBRE COMPLETO', '<input id="ne-full" placeholder="Ej: Ana Larissa Bahena Mujica" style="' + _neSt + '">') +
+    _neF('FECHA DE NACIMIENTO', '<input id="ne-dob" type="date" style="' + _neSt + '">') +
+    _neF('GÉNERO', '<select id="ne-gen" style="' + _neSt + '"><option value="mujer">Mujer</option><option value="hombre">Hombre</option></select>') +
+    _neF('RANGO ACTUAL', '<select id="ne-gup" onchange="var m=RANGO_INFO[this.value].m;document.getElementById(\'ne-meses\').value=m||\'\'" style="' + _neSt + '">' + ranks + '</select>') +
+    _neF('FECHA DEL ÚLTIMO EXAMEN (OPCIONAL)', '<input id="ne-ex" type="date" style="' + _neSt + '">') +
+    _neF('MESES PARA EL PRÓXIMO EXAMEN', '<input id="ne-meses" type="number" min="1" value="' + (RANGO_INFO[RANGOS_ORDEN[0]].m || '') + '" style="' + _neSt + '">') +
+    _neF('PIN DE 4 DÍGITOS', '<input id="ne-pin" inputmode="numeric" maxlength="4" style="' + _neSt + '">') +
+    '<div style="display:flex;gap:10px"><button onclick="document.getElementById(\'ne-overlay\').remove()" style="flex:1;padding:13px;border:none;border-radius:10px;background:#262931;color:#fff;font-size:15px">Cancelar</button>' +
+    '<button onclick="guardarNuevoEstudiante()" style="flex:1;padding:13px;border:none;border-radius:10px;background:#C8102E;color:#fff;font-size:15px;font-weight:600">Guardar</button></div></div>';
+  document.body.appendChild(o);
+}
+function guardarNuevoEstudiante() {
+  var v = function(id){ return document.getElementById(id).value.trim(); };
+  var name = v('ne-name'), full = v('ne-full') || name, dobS = v('ne-dob'), gup = v('ne-gup'), ex = v('ne-ex'), pin = v('ne-pin'), meses = parseInt(v('ne-meses'));
+  if (!name || !dobS || !meses || !/^\d{4}$/.test(pin)) { toast('Completá nombre, nacimiento, meses y un PIN de 4 dígitos'); return; }
+  var p = dobS.split('-'), dob = {d: parseInt(p[2]), m: parseInt(p[1]), y: parseInt(p[0])};
+  var inf = RANGO_INFO[gup], k = RANGOS_ORDEN.indexOf(gup), after = RANGOS_ORDEN[k + 1];
+  var target = (!after || gup === 'Sam Dan') ? gup : gup + ' → ' + (after.indexOf('Dan') !== -1 ? RANGO_INFO[after].n : after);
+  var tpl = students.filter(function(o){ return o.gup === gup && o.targetGup === target; })[0];
+  var o = {
+    id: BASE_N + estData.nuevos.length, name: name, pin: pin, dob: dob, fullName: full, age: calcEdad(dob), gender: v('ne-gen'),
+    gup: gup, beltColor: inf.c, beltName: inf.n, emoji: inf.e, targetGup: target,
+    months: ex ? monthsBetween(ex) : 0, monthsNeeded: meses, alertType: 'info', alert: 'Nuevo estudiante de la escuela Dan Kyul.'
+  };
+  if (ex) o.examDate = ex;
+  REQ_KEYS.forEach(function(key){ o[key] = (tpl && tpl[key]) ? JSON.parse(JSON.stringify(tpl[key])) : []; });
+  estData.nuevos.push(o);
+  saveEst(); applyEst(); applyRangos();
+  document.getElementById('ne-overlay').remove();
+  toast('✓ ' + name + ' agregado' + (tpl ? '' : ' (sin requisitos cargados)'));
+  renderCards();
 }
 
 function saveEvals() {
@@ -743,6 +824,19 @@ function loadFirebaseData() {
     console.warn('Firebase asist error, usando localStorage:', err);
     try { asistencias = JSON.parse(localStorage.getItem('dk_asist') || '[]'); } catch(e){}
   });
+
+  // Escuchar estudiantes nuevos / inactivos en tiempo real
+  db.collection('config').doc('estudiantes').onSnapshot(function(doc) {
+    if (window._estLocalWrite) return;
+    if (doc.exists && doc.data().data) {
+      try {
+        estData = JSON.parse(doc.data().data);
+        localStorage.setItem('dk_est', doc.data().data);
+        applyEst(); applyRangos();
+        if (document.getElementById('cards-container')) renderCards();
+      } catch(e){}
+    }
+  }, function(err){ console.warn('Firebase estudiantes error:', err); });
 
   // Escuchar promociones de rango en tiempo real
   db.collection('config').doc('rangos').onSnapshot(function(doc) {
@@ -938,7 +1032,7 @@ function mostrarLogin() {
   var sel = document.getElementById('loginName');
   sel.innerHTML = '<option value="">— Seleccioná tu nombre —</option>';
   students.forEach(function(s,i) {
-    sel.innerHTML += '<option value="' + i + '">' + s.fullName + '</option>';
+    sel.innerHTML += '<option value="' + i + '"' + (isInactivo(i) ? ' disabled' : '') + '>' + s.fullName + (isInactivo(i) ? ' (inactivo)' : '') + '</option>';
   });
   clearEntry('pinPad','d','pinError');
 }
@@ -1129,16 +1223,19 @@ function renderPagosEstudiante(si) {
 function renderCards() {
   // ── ADMIN: lista compacta estilo iOS ──
   if (adminMode) {
-    var hdr = '<div style="font-size:13px;color:#7A8699;margin-bottom:14px">' + students.length + ' estudiantes activos</div>';
-    var rows = students.map(function(s, i) {
+    var nIn = students.filter(function(_, j){ return isInactivo(j); }).length;
+    var hdr = '<button onclick="abrirNuevoEstudiante()" style="width:100%;padding:13px;margin-bottom:12px;border:none;border-radius:12px;background:#C8102E;color:#fff;font-size:15px;font-weight:600">＋ Agregar estudiante</button>' +
+      '<div style="font-size:13px;color:#7A8699;margin-bottom:14px">' + (students.length - nIn) + ' estudiantes activos' + (nIn ? ' · ' + nIn + ' inactivos' : '') + '</div>';
+    var rows = ordenEstudiantes().map(function(i) { var s = students[i];
       var pct = Math.min(100, Math.round(s.months/s.monthsNeeded*100));
       var bi = getBelt(s.gup);
       var av = bi ? '<img src="'+bi+'" style="width:34px;height:19px;object-fit:contain">' : s.emoji;
       var progDisplay = s.monthsNeeded >= 999 ? '<div class="srow-pct" style="color:#F0C040">★</div><div class="srow-pct-lbl">DAN</div>' : '<div class="srow-pct">'+pct+'%</div><div class="srow-pct-lbl">TIEMPO</div>';
-      return '<div class="srow" onclick="goDetail('+i+')">' +
+      return '<div class="srow" style="'+gr(i)+'" onclick="goDetail('+i+')">' +
         '<div class="srow-avatar" style="background:'+s.beltColor+'22;border-color:'+s.beltColor+'">'+av+'</div>' +
         '<div class="srow-info"><div class="srow-name">'+s.name+'</div><div class="srow-sub">'+s.beltName+' · '+s.age+' años</div></div>' +
         '<div class="srow-prog">'+progDisplay+'</div>' +
+        '<button onclick="toggleActivo('+i+',event)" style="margin-right:6px;padding:5px 9px;border:none;border-radius:8px;background:#262931;color:'+(isInactivo(i)?'#E74C3C':'#2ECC71')+';font-size:11px">'+(isInactivo(i)?'Inactivo':'Activo')+'</button>' +
         '<span class="srow-chev">›</span>' +
       '</div>';
     }).join('');
@@ -1199,9 +1296,9 @@ function renderEstudiantes() {
     return;
   }
   var ph = '';
-  students.forEach(function(s,i) {
+  ordenEstudiantes().forEach(function(i) { var s = students[i];
     var bi = getBelt(s.gup);
-    ph += '<div class="pill'+(currentStudent===i?' on':'')+'" onclick="goDetail('+i+')">' +
+    ph += '<div class="pill'+(currentStudent===i?' on':'')+'" style="'+gr(i)+'" onclick="goDetail('+i+')">' +
       (bi ? '<img src="'+bi+'" style="width:32px;height:18px;object-fit:contain">' : s.emoji+' ') +
       s.name+'</div>';
   });
@@ -1413,21 +1510,37 @@ function solicitarAsistencia(i) {
 
 // ── ASISTENCIA ADMIN ──────────────────────────────────────────────────────────
 var asistFiltro = null; // null | nombre del estudiante
+var asistMesSel = null, asistAnioSel = null;
+function cambiarMesAsist() {
+  asistMesSel = parseInt(document.getElementById('am-mes').value);
+  asistAnioSel = parseInt(document.getElementById('am-anio').value);
+  renderAsistenciaAdmin();
+}
 function renderAsistenciaAdmin() {
   var pending = asistencias.filter(function(a){ return a.estado==='pendiente'; });
   var confirmed = asistencias.filter(function(a){ return a.estado==='confirmada'; });
 
+  // ── SELECTOR DE MES ──
+  var mesIdx = asistMesSel !== null ? asistMesSel : new Date().getMonth();
+  var anioSel = asistAnioSel !== null ? asistAnioSel : new Date().getFullYear();
+  var mes = MESES[mesIdx];
+  var esMes = confirmed.filter(function(a){
+    var d = new Date(a.fecha+'T12:00:00');
+    return d.getMonth()===mesIdx && d.getFullYear()===anioSel;
+  });
+  var anios = {}; anios[new Date().getFullYear()] = 1;
+  asistencias.forEach(function(a){ if (a.fecha) anios[parseInt(a.fecha.slice(0,4))] = 1; });
+  var anioList = Object.keys(anios).map(Number).sort(function(a,b){ return b-a; });
+  var selSt = 'flex:1;padding:12px;border-radius:12px;border:1px solid #333;background:#181A20;color:#fff;font-size:15px';
+  var barEl = document.getElementById('asist-mes-bar');
+  if (barEl) barEl.innerHTML =
+    '<select id="am-mes" onchange="cambiarMesAsist()" style="'+selSt+'">' + MESES.map(function(m,k){ return '<option value="'+k+'"'+(k===mesIdx?' selected':'')+'>'+m+'</option>'; }).join('') + '</select>' +
+    '<select id="am-anio" onchange="cambiarMesAsist()" style="'+selSt+';flex:0 0 100px">' + anioList.map(function(a){ return '<option value="'+a+'"'+(a===anioSel?' selected':'')+'>'+a+'</option>'; }).join('') + '</select>';
+
   // ── DASHBOARD ──
   var dash = document.getElementById('asist-dashboard');
   if (dash) {
-    var mes = MESES[new Date().getMonth()];
-    var anioActual = new Date().getFullYear();
-    // Asistencias de este mes
-    var esMes = confirmed.filter(function(a){
-      var d = new Date(a.fecha+'T12:00:00');
-      return d.getMonth()===new Date().getMonth() && d.getFullYear()===anioActual;
-    });
-    // Asistencias de esta semana
+    // Asistencias de esta semana (siempre la semana real actual)
     var hoy = new Date();
     var inicioSemana = new Date(hoy); inicioSemana.setDate(hoy.getDate()-hoy.getDay());
     var estaSemana = confirmed.filter(function(a){
@@ -1452,11 +1565,11 @@ function renderAsistenciaAdmin() {
       '<div><button class="asist-approve" onclick="aprobarAsistencia('+a.id+')">✓ OK</button><button class="asist-reject" onclick="rechazarAsistencia('+a.id+')">✕</button></div></div>';
   }).join('') : '<p style="color:#888;font-size:13px">No hay solicitudes pendientes ✓</p>';
 
-  var confRev = confirmed.slice().reverse();
+  var confRev = esMes.slice().reverse();
   cEl.innerHTML = confRev.length ? confRev.map(function(a){
     return '<div class="asist-item"><div><div class="asist-name">'+a.nombre+'</div><div class="asist-date">'+a.fecha+' · '+a.hora+'</div></div>' +
       (adminMode?'<button onclick="eliminarAsistencia('+a.id+')" style="background:none;border:none;color:#E74C3C;font-size:15px;cursor:pointer">🗑</button>':'<span style="color:#2ECC71;font-size:18px">✓</span>') + '</div>';
-  }).join('') : '<p style="color:#888;font-size:13px">No hay asistencias confirmadas aún</p>';
+  }).join('') : '<p style="color:#888;font-size:13px">No hay asistencias confirmadas en '+mes+' '+anioSel+'</p>';
 }
 
 function eliminarAsistencia(id) {
@@ -1475,27 +1588,60 @@ function rechazarAsistencia(id) {
 }
 
 // ── EVENTOS ───────────────────────────────────────────────────────────────────
+var ORDEN_LISTA = ['Tiny Tiger','Little Dragon','10mo Gup','9no Gup','8vo Gup','7mo Gup','6to Gup','5to Gup','4to Gup','3er Gup','2do Gup','1er Gup','Cho Dan Bo','Cho Dan','E Dan','Sam Dan','Sah Dan','Sah Dan Master'];
+function ordenEstudiantes() {
+  return students.map(function(_, i){ return i; }).sort(function(a, b) {
+    var ra = ORDEN_LISTA.indexOf(students[a].gup), rb = ORDEN_LISTA.indexOf(students[b].gup);
+    if (ra < 0) ra = 99; if (rb < 0) rb = 99;
+    return ra !== rb ? ra - rb : a - b;
+  });
+}
+function fechaLocalHoy() {
+  var n = new Date();
+  return n.getFullYear() + '-' + ('0' + (n.getMonth() + 1)).slice(-2) + '-' + ('0' + n.getDate()).slice(-2);
+}
+function cumpleEventos() {
+  var y = new Date().getFullYear(), hoy = fechaLocalHoy(), out = [];
+  students.forEach(function(s, i) {
+    if (isInactivo(i) || !s.dob) return;
+    var mk = function(yy) {
+      return {id: 'bd-' + i + '-' + yy, cumple: true, titulo: '🎂 Cumpleaños de ' + s.name,
+        fecha: yy + '-' + ('0' + s.dob.m).slice(-2) + '-' + ('0' + s.dob.d).slice(-2), desc: 'Cumple ' + (yy - s.dob.y) + ' años'};
+    };
+    var e = mk(y); out.push(e);
+    if (e.fecha < hoy) out.push(mk(y + 1));
+  });
+  return out;
+}
 function renderEventos() {
   var addBtn = document.getElementById('btn-add-evento');
   if (addBtn) addBtn.style.display = adminMode ? 'block' : 'none';
   var el = document.getElementById('eventos-list');
-  if (!eventos.length) { el.innerHTML = '<p style="text-align:center;color:#888;padding:30px">No hay eventos registrados</p>'; return; }
-  var sorted = eventos.slice().sort(function(a,b){ return a.fecha>b.fecha?1:-1; });
-  el.innerHTML = sorted.map(function(ev) {
+  var hoy = fechaLocalHoy();
+  var todos = eventos.concat(adminMode ? cumpleEventos() : []);
+  if (!todos.length) { el.innerHTML = '<p style="text-align:center;color:#888;padding:30px">No hay eventos registrados</p>'; return; }
+  var prox = todos.filter(function(e){ return e.fecha >= hoy; }).sort(function(a,b){ return a.fecha > b.fecha ? 1 : -1; });
+  var pas = todos.filter(function(e){ return e.fecha < hoy; }).sort(function(a,b){ return a.fecha < b.fecha ? 1 : -1; });
+  function evCard(ev) {
     var d = new Date(ev.fecha+'T12:00:00');
     var day = d.getDate();
     var mon = d.toLocaleString('es-CR',{month:'short'}).toUpperCase();
-    var past = d < new Date();
+    var past = ev.fecha < hoy;
     return '<div class="cal-event" style="opacity:'+(past?'0.6':'1')+'">' +
       '<div class="cal-event-header">' +
         '<div class="cal-date-box"><div class="cal-day">'+day+'</div><div class="cal-mon">'+mon+'</div></div>' +
         '<div class="cal-info"><div class="cal-title">'+ev.titulo+'</div>'+(ev.desc?'<div class="cal-desc">'+ev.desc+'</div>':'')+'</div>' +
-        (adminMode?'<div style="display:flex;flex-direction:column;gap:4px"><button onclick="editarEvento('+ev.id+')" style="background:none;border:none;color:#3498DB;font-size:16px;cursor:pointer">✏️</button><button onclick="eliminarEvento('+ev.id+')" style="background:none;border:none;color:#E74C3C;font-size:16px;cursor:pointer">🗑</button></div>':'') +
+        (adminMode&&!ev.cumple?'<div style="display:flex;flex-direction:column;gap:4px"><button onclick="editarEvento('+ev.id+')" style="background:none;border:none;color:#3498DB;font-size:16px;cursor:pointer">✏️</button><button onclick="eliminarEvento('+ev.id+')" style="background:none;border:none;color:#E74C3C;font-size:16px;cursor:pointer">🗑</button></div>':'') +
       '</div>' +
       (ev.img?'<img src="'+ev.img+'" class="cal-img" onerror="this.style.display=\'none\'">':'') +
       (ev.link?'<a href="'+ev.link+'" target="_blank" class="cal-link">🔗 Ver más información</a>':'') +
     '</div>';
-  }).join('');
+  }
+  function sec(t, arr) {
+    return '<div style="font-size:12px;color:#F0C040;font-weight:700;letter-spacing:1px;margin:16px 0 8px">' + t + '</div>' +
+      (arr.length ? arr.map(evCard).join('') : '<p style="color:#888;font-size:13px;padding:6px 2px">Sin eventos</p>');
+  }
+  el.innerHTML = sec('📅 PRÓXIMOS EVENTOS', prox) + sec('📁 EVENTOS PASADOS', pas);
 }
 
 function editarEvento(id) {
@@ -1562,7 +1708,7 @@ function renderPagos() {
   var total = pagadosMes.reduce(function(a,b){ return a+(parseFloat(b.monto)||0); },0);
   // Estudiantes que NO han pagado este mes
   var nombresPagaron = pagadosMes.map(function(p){ return p.estudiante; });
-  var pendientesList = students.filter(function(s){ return nombresPagaron.indexOf(s.fullName)===-1; });
+  var pendientesList = students.filter(function(s, j){ return !isInactivo(j) && nombresPagaron.indexOf(s.fullName)===-1; });
 
   function activeStyle(f){ return pagoFiltro===f ? 'border:2px solid #F0C040;' : 'border:2px solid transparent;'; }
 
@@ -1599,7 +1745,7 @@ function renderPagos() {
   listEl.innerHTML = titulo + (pRev.length ? pRev.map(function(p) {
     var realIdx = pagos.indexOf(p);
     var bc = p.estado==='Pagado'?'badge-ok':p.estado==='Pendiente'?'badge-pend':'badge-parc';
-    return '<div class="pago-item">' +
+    return '<div class="pago-item" style="'+grNombre(p.estudiante)+'">' +
       '<div class="pago-row"><span class="pago-name">'+p.estudiante+'</span><span class="pago-monto">₡'+parseFloat(p.monto||0).toLocaleString('es-CR')+'</span></div>' +
       '<div class="pago-row"><span class="pago-mes">'+p.mes+' '+p.anio+' · '+(p.fecha||'—')+'</span><span class="badge '+bc+'">'+p.estado+'</span></div>' +
       '<div class="pago-code">'+p.codigo+'</div>' +
@@ -1624,7 +1770,7 @@ function abrirModalPagoPara(nombre) {
 function abrirModal(id) {
   if (id === 'modal-pago') {
     var sel = document.getElementById('p-est');
-    sel.innerHTML = students.map(function(s){ return '<option>'+s.fullName+'</option>'; }).join('');
+    sel.innerHTML = students.map(function(s, j){ var ina = isInactivo(j); return '<option value="'+s.fullName.replace(/"/g,'&quot;')+'"'+(ina?' style="color:#777"':'')+'>'+s.fullName+(ina?' (inactivo)':'')+'</option>'; }).join('');
     document.getElementById('p-fecha').value = new Date().toISOString().split('T')[0];
     document.getElementById('p-mes').value = MESES[new Date().getMonth()];
     document.getElementById('p-anio').value = new Date().getFullYear();
@@ -2579,7 +2725,7 @@ function renderResultados() {
       ? '<img src="' + bi + '" style="width:36px;height:20px;object-fit:contain">'
       : s.emoji;
 
-    html += '<div class="res-card">';
+    html += '<div class="res-card" style="'+gr(si)+'">';
     html += '<div class="res-header" onclick="toggleResBody(' + si + ')">' +
       '<div style="width:40px;height:40px;border-radius:50%;background:' + s.beltColor + '22;border:2px solid ' + s.beltColor + ';display:flex;align-items:center;justify-content:center;flex-shrink:0">' + avatarInner + '</div>' +
       '<div><div class="res-name">' + s.fullName + '</div><div class="res-belt">' + s.gup + ' &nbsp;&middot;&nbsp; ' + s.age + ' anos</div></div>' +
@@ -2802,7 +2948,7 @@ function renderInsigniasView() {
       var bi = getBelt(s.gup);
       var av = bi ? '<img src="'+bi+'" style="width:32px;height:18px;object-fit:contain">' : s.emoji;
       var pct = Math.round(total / BADGE_DEFS.length * 100);
-      html += '<div class="res-card">' +
+      html += '<div class="res-card" style="'+gr(idx)+'">' +
         '<div class="res-header" onclick="toggleInsigniasAdmin('+idx+')" style="cursor:pointer;user-select:none">' +
           '<div style="width:40px;height:40px;border-radius:50%;background:'+s.beltColor+'22;border:2px solid '+s.beltColor+';display:flex;align-items:center;justify-content:center;flex-shrink:0">'+av+'</div>' +
           '<div style="flex:1">' +
